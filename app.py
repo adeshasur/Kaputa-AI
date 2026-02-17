@@ -24,16 +24,181 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
+# Initialize theme state (default to Light mode)
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
+
 # 2. Page Config
 st.set_page_config(
     page_title="Kaputa AI Pro",
     page_icon="⚡", 
-    layout="centered", # Back to centered for focus
+    layout="centered",
     initial_sidebar_state="expanded"
 )
 
-# --- PROFESSIONAL CSS SYSTEM ---
-st.markdown("""
+# Dynamic CSS Function
+def get_theme_css(theme):
+    if theme == "Dark":
+        return """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        :root {
+            --apple-blue: #007AFF;
+            --bg-main: #000000;
+            --bg-card: #1C1C1E;
+            --text-primary: #F2F2F7;
+            --text-secondary: #8E8E93;
+            --text-tertiary: #6E6E73;
+        }
+
+        html, body, [class*="css"] {
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+            color: var(--text-primary) !important;
+            background-color: var(--bg-main) !important;
+        }
+
+        /* iOS Large Title */
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(180deg, #FFFFFF 0%, #888888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: -1.5px;
+        }
+        
+        .badge {
+            color: #007AFF;
+            font-size: 1rem;
+            vertical-align: top;
+            font-weight: 600;
+            background: rgba(0, 122, 255, 0.15);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* Sidebar: Dark Glassmorphism */
+        [data-testid="stSidebar"] {
+            background: rgba(28, 28, 30, 0.85) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            padding-bottom: 80px;
+            min-width: 280px !important;
+            max-width: 280px !important;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            width: 280px !important;
+            background: transparent;
+        }
+
+        /* Dark Cards */
+        .result-card {
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Inputs: Dark Style */
+        .stTextInput input, .stTextArea textarea {
+            background-color: #2C2C2E !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border-radius: 18px !important;
+            padding: 16px !important;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .stTextInput input:focus, .stTextArea textarea:focus {
+            border-color: var(--apple-blue) !important;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.3);
+        }
+        
+        /* Buttons: Premium */
+        .stButton button {
+            background-color: #007AFF !important;
+            color: white !important;
+            border-radius: 9999px !important;
+            padding: 10px 24px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+            border: none !important;
+            transition: all 0.2s ease;
+        }
+        .stButton button:hover {
+            background-color: #0051D5 !important;
+            box-shadow: 0 6px 16px rgba(0, 122, 255, 0.5);
+        }
+        .stButton button:active {
+            transform: scale(0.97);
+        }
+
+        /* Tabs: Dark Segmented */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+            border-radius: 16px;
+            display: inline-flex;
+            justify-content: center;
+            margin: 0 auto;
+            width: fit-content;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            padding: 8px 20px;
+            border-radius: 12px;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #3A3A3C !important;
+            color: var(--text-primary) !important;
+            font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Footer: Dark */
+        .footer {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            width: 260px;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: var(--text-tertiary);
+            padding: 8px 10px;
+            border-radius: 14px;
+            font-size: 0.65rem;
+            text-align: center;
+            z-index: 10000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            line-height: 1.4;
+        }
+
+        /* Crow Logo */
+        .crow-logo {
+            text-align: center;
+            font-size: 3.5rem;
+            padding: 20px 0 10px 0;
+            filter: grayscale(0%);
+        }
+
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
+    </style>
+"""
+    else:  # Light Mode
+        return """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
@@ -48,10 +213,9 @@ st.markdown("""
 
         html, body, [class*="css"] {
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
-            color: var(--text-primary);
-            background-color: var(--bg-main);
+            color: var(--text-primary) !important;
+            background-color: var(--bg-main) !important;
         }
-
 
         /* iOS Large Title */
         .main-title {
@@ -75,7 +239,7 @@ st.markdown("""
             border-radius: 20px;
         }
 
-        /* Sidebar: Glassmorphism Effect */
+        /* Sidebar: Glassmorphism */
         [data-testid="stSidebar"] {
             background: rgba(255, 255, 255, 0.7) !important;
             backdrop-filter: blur(20px);
@@ -91,7 +255,7 @@ st.markdown("""
             background: transparent;
         }
 
-        /* White Cards with Soft Shadows */
+        /* White Cards */
         .result-card {
             background-color: var(--bg-card);
             border-radius: 20px;
@@ -101,7 +265,7 @@ st.markdown("""
             border: 1px solid rgba(0, 0, 0, 0.06);
         }
 
-        /* Inputs: iMessage Style */
+        /* Inputs: Light iMessage Style */
         .stTextInput input, .stTextArea textarea {
             background-color: var(--bg-card) !important;
             border: 1px solid rgba(0, 0, 0, 0.1) !important;
@@ -115,7 +279,7 @@ st.markdown("""
             box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
         }
         
-        /* Buttons: Pill Shaped Premium */
+        /* Buttons: Premium */
         .stButton button {
             background-color: #007AFF !important;
             color: white !important;
@@ -134,7 +298,7 @@ st.markdown("""
             transform: scale(0.97);
         }
 
-        /* Tabs: Light Segmented Control */
+        /* Tabs: Light Segmented */
         .stTabs [data-baseweb="tab-list"] {
             gap: 8px;
             background-color: rgba(0, 0, 0, 0.05);
@@ -160,7 +324,7 @@ st.markdown("""
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        /* Footer: Inside Sidebar - Elegant Grey */
+        /* Footer: Light */
         .footer {
             position: fixed;
             bottom: 10px;
@@ -180,24 +344,45 @@ st.markdown("""
             line-height: 1.4;
         }
 
-        /* Hide Default Streamlit Elements */
-        footer {visibility: hidden;}
-        #MainMenu {visibility: hidden;}
-        
-        /* Crow Logo at Top */
+        /* Crow Logo */
         .crow-logo {
             text-align: center;
             font-size: 3.5rem;
             padding: 20px 0 10px 0;
             filter: grayscale(20%);
         }
+
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
     </style>
-""", unsafe_allow_html=True)
+"""
+
+# Apply current theme CSS
+st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 
 # Crow Logo in Sidebar (Will appear in all tabs)
 with st.sidebar:
     st.markdown('<div class="crow-logo">🦅</div>', unsafe_allow_html=True)
     st.markdown("---")
+    
+    # Theme Toggle
+    theme_options = ["Light", "Dark"]
+    current_index = theme_options.index(st.session_state.theme)
+    selected_theme = st.radio(
+        "🌓 Theme",
+        theme_options,
+        index=current_index,
+        horizontal=True,
+        label_visibility="visible"
+    )
+    
+    # Update theme if changed
+    if selected_theme != st.session_state.theme:
+        st.session_state.theme = selected_theme
+        st.rerun()
+    
+    st.markdown("---")
+
 
 # --- HEADER SECTION ---
 st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
