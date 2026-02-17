@@ -368,24 +368,6 @@ with st.sidebar:
         </div>
     ''', unsafe_allow_html=True)
     st.markdown("---")
-    
-    # Theme Toggle
-    theme_options = ["Light", "Dark"]
-    current_index = theme_options.index(st.session_state.theme)
-    selected_theme = st.radio(
-        "🌓 Theme",
-        theme_options,
-        index=current_index,
-        horizontal=True,
-        label_visibility="visible"
-    )
-    
-    # Update theme if changed
-    if selected_theme != st.session_state.theme:
-        st.session_state.theme = selected_theme
-        st.rerun()
-    
-    st.markdown("---")
 
 
 # --- HEADER SECTION ---
