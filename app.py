@@ -168,7 +168,8 @@ def get_video_id(url):
 
 # --- MODEL (Gemini 2.0 Flash) ---
 try:
-    model = genai.GenerativeModel('gemini-2.0-flash')
+    # Switching to 1.5 Flash for best stability
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except:
     st.error("System Error: Model connection failed.")
 
@@ -208,7 +209,7 @@ with tab1:
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.messages.append({"role": "model", "content": "Kaputa AI Pro online. Connectivity established. How can I assist?"})
+        st.session_state.messages.append({"role": "model", "content": "Kaputa AI Pro (1.5) online. Connectivity optimized. How can I assist?"})
 
     for message in st.session_state.messages:
         role = message["role"]
