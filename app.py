@@ -3,55 +3,51 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# 1. Environment variables setup
+# 1. Setup Environment
 load_dotenv()
 
-# Streamlit Cloud එකේදී API Key එක ගන්න විදිය
+# API Key එක ලබා ගැනීම
 if "GEMINI_API_KEY" in st.secrets:
     api_key = st.secrets["GEMINI_API_KEY"]
 else:
     api_key = os.getenv("GEMINI_API_KEY")
 
-# API Key Check
 if not api_key:
-    st.error("API Key එක හමු නොවීය. කරුණාකර Settings වල Secrets පරීක්ෂා කරන්න.")
+    st.error("API Key is missing.")
     st.stop()
 
-# Gemini Configure
+# 2. Configure Gemini
 genai.configure(api_key=api_key)
 
-# 2. Page Config
+# 3. Setup Model - අපි භාවිතා කරන්නේ 'gemini-pro' (මේක ඕනම තැනක වැඩ)
+try:
+    model = genai.GenerativeModel('gemini-pro')
+except Exception as e:
+    st.error(f"Error setting up model: {e}")
+
+# 4. App UI
 st.set_page_config(page_title="Kaputa AI", page_icon="🐦")
 st.title("Kaputa AI 🐦")
-st.caption("Developed by Adheesha | Powered by Gemini 1.5 Flash")
+st.caption("Powered by Gemini Pro")
 
-# 3. Model Setup (Changed to gemini-1.5-flash which is STABLE and FREE)
-try:
-    model = genai.GenerativeModel("gemini-1.5-flash")
-except Exception as e:
-    st.error(f"Model Error: {e}")
-
-# 4. Chat History Setup
+# 5. Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Kaputa ගේ පළවෙනි මැසේජ් එක
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම කපුටා (Kaputa). මම Adheesha හදපු AI සහයකයා. මොනවද දැනගන්න ඕන?"})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මට ඔයාට කොහොමද උදව් කරන්න පුළුවන්?"})
 
-# 5. Display History
+# 6. Display Chat
 for message in st.session_state.messages:
     role = "assistant" if message["role"] == "model" else "user"
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# 6. User Input Handling
-if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන්න..."):
-    # User message
+# 7. Handle User Input
+if prompt := st.chat_input("Ask something..."):
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # AI Response
     try:
-        # Chat Session එක හදමු
+        # Chat Object එක හදනවා
         chat = model.start_chat(history=[
             {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
             else {"role": "model", "parts": [m["content"]]}
@@ -60,13 +56,10 @@ if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන�
         
         response = chat.send_message(prompt)
         
-        # Display response
         with st.chat_message("assistant"):
             st.markdown(response.text)
         
-        # Save to history
         st.session_state.messages.append({"role": "model", "content": response.text})
         
     except Exception as e:
-        # Error handling - විශේෂයෙන් Quota errors
-        st.error(f"පොඩි දෝෂයක්: {e}")
+        st.error(f"Error: {e}")
