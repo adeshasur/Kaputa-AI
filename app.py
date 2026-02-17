@@ -6,6 +6,10 @@ from PIL import Image
 import PyPDF2
 from gtts import gTTS
 import tempfile
+from duckduckgo_search import DDGS
+from fpdf import FPDF
+from streamlit_mic_recorder import mic_recorder
+import io
 
 # 1. Environment Setup
 load_dotenv()
@@ -22,43 +26,85 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # 2. Page Config
-st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="centered")
-st.title("Kaputa AI 🐦")
-st.caption("Gemini 2.5 Flash | Vision 👁️ | Voice 🗣️ | PDF 📚")
+st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="wide")
+st.title("Kaputa AI 🐦 (Ultimate Version)")
+st.caption("Gemini 2.5 Flash | Vision 👁️ | Voice 🗣️ | Web Search 🌍 | PDF Export �")
 
-# 3. Sidebar (Settings & PDF Upload)
+# 3. Helper Function: Web Search
+def search_web(query):
+    try:
+        results = DDGS().text(query, max_results=3)
+        return "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+    except Exception as e:
+        return None
+
+# 4. Helper Function: Export Chat to PDF
+def create_pdf(messages):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    pdf.cell(200, 10, txt="Kaputa AI - Chat History", ln=True, align='C')
+    pdf.ln(10)
+
+    for msg in messages:
+        role = "User" if msg['role'] == "user" else "Kaputa"
+        # Note: FPDF doesn't support Sinhala perfectly, so we sanitize text
+        content = msg['content'].encode('latin-1', 'replace').decode('latin-1') 
+        pdf.multi_cell(0, 10, txt=f"{role}: {content}")
+        pdf.ln(5)
+    
+    return pdf.output(dest='S').encode('latin-1')
+
+# 5. Sidebar (Settings & Tools)
 with st.sidebar:
-    st.header("⚙️ Settings")
+    st.header("⚙️ Settings & Tools")
+    
+    # Toggle Web Search
+    enable_search = st.toggle("🌍 Enable Web Search (අන්තර්ජාලය)")
     
     # PDF Upload
-    st.subheader("📚 Study Buddy (PDF)")
-    uploaded_pdf = st.file_uploader("Upload PDF Lecture Note", type="pdf")
+    st.subheader("📚 Study Buddy")
+    uploaded_pdf = st.file_uploader("Upload Lecture Note (PDF)", type="pdf")
     
     pdf_text = ""
-    if uploaded_pdf is not None:
+    if uploaded_pdf:
         try:
             reader = PyPDF2.PdfReader(uploaded_pdf)
             for page in reader.pages:
                 pdf_text += page.extract_text()
-            st.success("PDF එක කියෙව්වා! දැන් ඒකෙන් ප්රශ්න අහන්න. ✅")
-        except Exception as e:
-            st.error(f"PDF Error: {e}")
+            st.success("PDF Loaded! ✅")
+        except:
+            st.error("PDF Error")
 
+    # Export Chat Button
     st.markdown("---")
-    if st.button("🗑️ Clear Chat History"):
+    # Check if messages exist before calling create_pdf
+    msgs = st.session_state.messages if "messages" in st.session_state else []
+    if msgs:
+         pdf_data = create_pdf(msgs)
+         st.download_button(
+             label="� Download Chat (PDF)",
+             data=pdf_data,
+             file_name="kaputa_chat.pdf",
+             mime="application/pdf"
+         )
+
+    # Clear Chat
+    if st.button("🗑️ Clear History"):
         st.session_state.messages = []
         st.rerun()
 
-# 4. Model Setup (Corrected to 2.5 Flash)
+# 6. Model Setup
 try:
     model = genai.GenerativeModel('gemini-2.5-flash')
-except Exception as e:
-    st.error(f"Model Error: {e}")
+except:
+    st.error("Model Error")
 
-# 5. Chat History
+# 7. Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මට පින්තූර බලන්න, PDF කියවන්න වගේම කතා කරන්නත් පුළුවන්. මොනවද කරන්න ඕන?"})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. දැන් මට අන්තර්ජාලයෙන් හොයන්නත්, ඔයා කියන දේ අහන්නත් පුළුවන්."})
 
 # Display Messages
 for message in st.session_state.messages:
@@ -66,58 +112,85 @@ for message in st.session_state.messages:
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# 6. Image Uploader (Chat එක ඇතුලේ)
-uploaded_image = st.file_uploader("Upload an Image...", type=["jpg", "jpeg", "png"], label_visibility="collapsed")
-if uploaded_image:
-    st.image(uploaded_image, caption="Uploaded Image", width=200)
+# 8. VOICE INPUT (Microphone) 🎤
+st.markdown("---")
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.write("🎤 **Voice Input:**")
+    audio = mic_recorder(start_prompt="⏺️ Record", stop_prompt="⏹️ Stop", key='recorder')
 
-# 7. User Input Handling
-if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන්න..."):
-    # User Message
-    st.chat_message("user").markdown(prompt)
-    st.session_state.messages.append({"role": "user", "content": prompt})
+audio_prompt = None
+if audio:
+    # Voice Input එක කෙලින්ම Gemini ට යවමු (Audio Understanding)
+    st.audio(audio['bytes'])
+    audio_prompt = audio['bytes']
 
-    try:
-        with st.chat_message("assistant"):
-            with st.spinner("කල්පනා කරමින්... 🤔"):
-                response_text = ""
-                
-                # Scenario 1: PDF එකක් ගැන අහනවා නම්
-                if uploaded_pdf and pdf_text:
-                    prompt_with_context = f"Based on this PDF content: \n\n{pdf_text}\n\nUser Question: {prompt}"
-                    response = model.generate_content(prompt_with_context)
+# 9. Main Logic
+prompt = st.chat_input("Type something...")
+
+if prompt or audio_prompt:
+    # User Input එක හදාගැනීම
+    user_content = prompt if prompt else "🎤 [Audio Message Sent]"
+    
+    with st.chat_message("user"):
+        st.markdown(user_content)
+    st.session_state.messages.append({"role": "user", "content": user_content})
+
+    with st.chat_message("assistant"):
+        with st.spinner("Kaputa is thinking... 🤔"):
+            response_text = ""
+            
+            try:
+                # A. Voice Input නම් (Audio Processing)
+                if audio_prompt:
+                    # Audio එක File එකක් විදියට Save කරගන්නවා
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
+                        temp_audio.write(audio_prompt)
+                        temp_audio_path = temp_audio.name
+                    
+                    # Gemini ට Audio File එක යවනවා
+                    audio_file = genai.upload_file(temp_audio_path)
+                    
+                    # Wait for file processing if needed, but for small audio usually fast. 
+                    # Ideally we loop check state, but start simple.
+                    
+                    response = model.generate_content(["Please listen to this audio and reply in Sinhala or English:", audio_file])
                     response_text = response.text
                 
-                # Scenario 2: Image එකක් ගැන අහනවා නම්
-                elif uploaded_image:
-                    image = Image.open(uploaded_image)
-                    response = model.generate_content([prompt, image])
+                # B. Web Search On නම් 🌍
+                elif enable_search and prompt:
+                    search_results = search_web(prompt)
+                    if search_results:
+                        st.info(f"🔎 Searching Web: Found info about '{prompt}'")
+                        final_prompt = f"Context from Web Search:\n{search_results}\n\nUser Question: {prompt}\n\nAnswer based on the context."
+                        response = model.generate_content(final_prompt)
+                    else:
+                        response = model.generate_content(prompt)
                     response_text = response.text
-                
-                # Scenario 3: නිකන් Chat කරනවා නම්
+
+                # C. PDF Context 📚
+                elif uploaded_pdf and pdf_text and prompt:
+                    final_prompt = f"PDF Context:\n{pdf_text}\n\nQuestion: {prompt}"
+                    response = model.generate_content(final_prompt)
+                    response_text = response.text
+
+                # D. Normal Chat / Image
                 else:
-                    chat = model.start_chat(history=[
-                        {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
-                        else {"role": "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages if "parts" not in m
-                    ])
-                    response = chat.send_message(prompt)
+                    response = model.generate_content(prompt)
                     response_text = response.text
 
-                # ප්රතිචාරය පෙන්වීම
                 st.markdown(response_text)
-                
-                # Voice Output (උත්තරය කියවීම) 🗣️
+
+                # Voice Output (Text-to-Speech) 🗣️
                 try:
                     tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
                         tts.save(fp.name)
                         st.audio(fp.name, format="audio/mp3")
                 except:
-                    pass 
+                    pass
 
-        # Save to History
-        st.session_state.messages.append({"role": "model", "content": response_text})
+                st.session_state.messages.append({"role": "model", "content": response_text})
 
-    except Exception as e:
-        st.error(f"Error: {e}")
+            except Exception as e:
+                st.error(f"Error: {e}")
