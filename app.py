@@ -30,11 +30,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 3. ADVANCED CUSTOM CSS (The Magic 🎨) ---
+# --- 3. ADVANCED CUSTOM CSS (Dark Mode Optimized �) ---
 st.markdown("""
     <style>
         /* Import Google Font */
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
         
         /* Apply Font */
         html, body, [class*="css"] {
@@ -50,37 +50,19 @@ st.markdown("""
             -webkit-text-fill-color: transparent;
             text-align: center;
             margin-bottom: 10px;
+            text-shadow: 0px 4px 15px rgba(255, 75, 75, 0.3);
             animation: fadeIn 2s ease-in-out;
         }
         
         .sub-title {
             text-align: center;
             font-size: 1.1rem;
-            color: #666;
+            color: #b0b0b0; /* Light Grey for Dark Mode */
             margin-bottom: 30px;
         }
 
-        /* Advanced Chat Bubbles */
-        /* Note: Streamlit classes change, so we target generic elements cautiously */
-        
-        .stChatMessage {
-            background-color: transparent;
-            border-radius: 15px;
-            padding: 10px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .stChatMessage:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transform: translateY(-2px);
-        }
-
-        /* Sidebar Styling */
-        [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-            border-right: 1px solid #dee2e6;
-        }
+        /* Sidebar Styling - WE REMOVED THE FORCED WHITE BACKGROUND */
+        /* Let Streamlit Config handle the dark background */
 
         /* Footer */
         .footer {
@@ -88,12 +70,12 @@ st.markdown("""
             bottom: 0;
             left: 0;
             width: 100%;
-            background-color: white;
-            color: #888;
+            background-color: #0E1117; /* Match Dark Bg */
+            color: #666;
             text-align: center;
             font-size: 0.8rem;
             padding: 10px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #262730;
             z-index: 1000;
         }
 
@@ -172,6 +154,7 @@ if "messages" not in st.session_state:
     st.session_state.messages.append({"role": "model", "content": "👋 හායි! මම Kaputa. ඔයාගේ ඕනෑම වැඩකට මම ලෑස්තියි. අහන්න..."})
 
 # Display Messages
+# Streamlit now handles avatars cleanly, no custom CSS needed for bubbles
 for message in st.session_state.messages:
     role = message["role"]
     if role == "model":
@@ -186,7 +169,7 @@ prompt = st.chat_input("Message Kaputa AI...")
 
 if prompt:
     # User
-    with st.chat_message("user", avatar="�"):
+    with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -212,7 +195,6 @@ if prompt:
                 
                 else:
                     response = model.generate_content(prompt)
-                    # Simple Typing Effect (Optional, Streamlit renders markdown chunks well)
                     response_text = response.text
 
                 message_placeholder.markdown(response_text)
