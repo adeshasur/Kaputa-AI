@@ -8,7 +8,6 @@ from gtts import gTTS
 import tempfile
 from duckduckgo_search import DDGS
 from fpdf import FPDF
-from streamlit_mic_recorder import mic_recorder
 
 # 1. Environment Setup
 load_dotenv()
@@ -27,7 +26,7 @@ genai.configure(api_key=api_key)
 # 2. Page Config
 st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="centered")
 st.title("Kaputa AI 🐦")
-st.caption("Gemini 2.5 Flash | Voice & Vision Enabled")
+st.caption("Gemini 2.5 Flash | Vision 👁️ | Web Search 🌍 | PDF 📚")
 
 # 3. Helper Functions
 def search_web(query):
@@ -45,25 +44,28 @@ def create_pdf(messages):
     pdf.ln(10)
     for msg in messages:
         role = "User" if msg['role'] == "user" else "Kaputa"
+        # Sinhala characters cleanup for PDF (basic)
         content = msg['content'].encode('latin-1', 'replace').decode('latin-1') 
         pdf.multi_cell(0, 10, txt=f"{role}: {content}")
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
-# 4. Sidebar (Updated with New Chat Button)
+# 4. Sidebar Tools
 with st.sidebar:
-    # ➕ NEW CHAT BUTTON (උඩින්ම දානවා)
+    # ➕ New Chat Button
     if st.button("➕ New Chat", use_container_width=True, type="primary"):
         st.session_state.messages = []
         st.rerun()
     
     st.markdown("---")
+    st.header("🛠️ Tools")
     
-    st.header("🛠️ Toolkit")
-    enable_search = st.toggle("🌍 Web Search")
+    # Web Search Toggle
+    enable_search = st.toggle("🌍 Enable Web Search")
     
+    # PDF Upload
     st.subheader("📚 Study Buddy")
-    uploaded_pdf = st.file_uploader("Upload PDF", type="pdf")
+    uploaded_pdf = st.file_uploader("Upload PDF Note", type="pdf")
     pdf_text = ""
     if uploaded_pdf:
         try:
@@ -75,8 +77,10 @@ with st.sidebar:
             st.error("PDF Error")
 
     st.markdown("---")
+    
+    # Download Chat
     st.download_button(
-        label="💾 Download Chat",
+        label="💾 Download Chat (PDF)",
         data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
         file_name="kaputa_chat.pdf",
         mime="application/pdf"
@@ -88,82 +92,53 @@ try:
 except:
     st.error("Model Error")
 
-# 6. Chat History Initialization
+# 6. Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. අලුත් දෙයක් පටන් ගමුද?"})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මම දැන් හරිම වේගවත්. මොනවද දැනගන්න ඕන?"})
 
-# Display Chat History
 for message in st.session_state.messages:
     role = "assistant" if message["role"] == "model" else "user"
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# --- VOICE INPUT SECTION ---
-st.write("---") 
-c1, c2 = st.columns([1, 5])
-with c1:
-    audio = mic_recorder(
-        start_prompt="🎙️ Record",
-        stop_prompt="🛑 Stop",
-        just_once=False,
-        key='recorder'
-    )
-with c2:
-    st.caption("Click Record to speak.")
+# 7. Main Logic (Text Only)
+prompt = st.chat_input("මොනවද දැනගන්න ඕන?...")
 
-# Audio Processing
-audio_prompt = None
-if audio:
-    audio_prompt = audio['bytes']
-
-# 7. Main Input Logic
-prompt = st.chat_input("Type something here...")
-
-if prompt or audio_prompt:
-    user_content = prompt if prompt else "🎤 [Voice Message]"
-    
+if prompt:
+    # User Message
     with st.chat_message("user"):
-        st.markdown(user_content)
-    st.session_state.messages.append({"role": "user", "content": user_content})
+        st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt})
 
+    # AI Response
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
+        with st.spinner("Kaputa is thinking..."):
             response_text = ""
             try:
-                # A. Voice Logic
-                if audio_prompt:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
-                        temp_audio.write(audio_prompt)
-                        temp_audio_path = temp_audio.name
-                    
-                    audio_file = genai.upload_file(temp_audio_path)
-                    response = model.generate_content(["Reply to this audio (Sinhala/English):", audio_file])
-                    response_text = response.text
-
-                # B. Web Search Logic
-                elif enable_search and prompt:
+                # A. Web Search Logic
+                if enable_search:
                     search_results = search_web(prompt)
                     if search_results:
-                        final_prompt = f"Web Results:\n{search_results}\n\nQuery: {prompt}"
+                        final_prompt = f"Web Search Results:\n{search_results}\n\nUser Query: {prompt}\n\nAnswer based on results."
                         response = model.generate_content(final_prompt)
                     else:
                         response = model.generate_content(prompt)
                     response_text = response.text
 
-                # C. PDF Logic
-                elif uploaded_pdf and pdf_text and prompt:
-                    response = model.generate_content(f"PDF Context:\n{pdf_text}\n\nQuery: {prompt}")
+                # B. PDF Logic
+                elif uploaded_pdf and pdf_text:
+                    response = model.generate_content(f"Context from PDF:\n{pdf_text}\n\nUser Question: {prompt}")
                     response_text = response.text
                 
-                # D. Normal Chat
+                # C. Normal Chat
                 else:
                     response = model.generate_content(prompt)
                     response_text = response.text
 
                 st.markdown(response_text)
 
-                # Voice Output
+                # Kaputa Speaking (Output Voice Only) - මේක තිබුණට UI එක කැත වෙන්නේ නෑ
                 try:
                     tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
