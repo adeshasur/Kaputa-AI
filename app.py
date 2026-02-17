@@ -45,6 +45,21 @@ st.markdown("""
         }
         .subtitle-text { text-align: center; font-size: 1rem; color: #888; margin-bottom: 20px; }
         .stButton button { border-radius: 10px; font-weight: 600; }
+        
+        /* Footer Fixed */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #0E1117;
+            color: #FAFAFA;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 10px;
+            border-top: 1px solid #262730;
+            z-index: 1000;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -273,4 +288,4 @@ with tab4:
                     st.markdown(response.text)
 
 # Footer
-st.markdown('<div style="text-align: center; color: #666; padding: 20px;">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
