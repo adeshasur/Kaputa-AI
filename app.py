@@ -239,6 +239,9 @@ with tab1:
             use_container_width=True
         )
 
+        # Footer at bottom of sidebar
+        st.markdown('<div class="footer">Kaputa AI Pro v2.0 | Engineered by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
+
     if "messages" not in st.session_state:
         st.session_state.messages = []
         st.session_state.messages.append({"role": "model", "content": "Kaputa AI Pro (1.5) online. Connectivity optimized. How can I assist?"})
@@ -357,5 +360,3 @@ with tab4:
                     st.markdown(res.text)
                     st.markdown('</div>', unsafe_allow_html=True)
 
-# Footer
-st.markdown('<div class="footer">Kaputa AI Pro v2.0 | Engineered by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
