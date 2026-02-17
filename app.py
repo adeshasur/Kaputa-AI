@@ -27,8 +27,8 @@ genai.configure(api_key=api_key)
 # 2. Page Config
 st.set_page_config(
     page_title="Kaputa AI Pro",
-    page_icon="⚡", # Cleaner icon
-    layout="wide", # Wide layout for Dashboard feel
+    page_icon="⚡", 
+    layout="centered", # Back to centered for focus
     initial_sidebar_state="expanded"
 )
 
@@ -38,91 +38,80 @@ st.markdown("""
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap');
         
         :root {
-            --primary: #4F46E5;
+            --primary: #6366f1;
             --background: #0E1117;
-            --surface: #1F2937;
-            --text: #F3F4F6;
+            --text: #FAFAFA;
         }
 
         html, body, [class*="css"] {
             font-family: 'Outfit', sans-serif;
             color: var(--text);
+            line-height: 1.6; /* More breathing room */
         }
 
-        /* Cleaner Sidebar */
+        /* Clean Sidebar */
         [data-testid="stSidebar"] {
-            background-color: var(--background);
-            border-right: 1px solid #374151;
+            background-color: #111827;
+            border-right: 1px solid #1f2937;
         }
 
-        /* Modern Title (No Gradients, Just Clean) */
+        /* Minimal Title */
         .main-title {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 700;
             color: #ffffff;
-            letter-spacing: -1px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
+            text-align: center;
         }
         
         .badge {
-            background: #4F46E5;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            color: #6366f1;
+            font-size: 1rem;
+            vertical-align: super;
             font-weight: 600;
-            vertical-align: middle;
-            margin-left: 10px;
         }
 
-        /* Card Style for Results */
+        /* Clean Cards (No Background, Just spacing) */
         .result-card {
-            background-color: #1F2937;
-            border: 1px solid #374151;
-            border-radius: 12px;
-            padding: 20px;
             margin-top: 20px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-left: 2px solid #6366f1; /* Minimal accent */
+            background: transparent;
         }
 
-        /* Input Fields */
+        /* Inputs */
         .stTextInput input, .stTextArea textarea {
-            background-color: #111827 !important;
+            background-color: #1f2937 !important;
             border: 1px solid #374151 !important;
-            color: #fff !important;
-            border-radius: 8px !important;
+            color: white !important;
+            border-radius: 12px !important;
+            padding: 10px !important;
         }
 
-        /* Buttons */
+        /* Buttons (Subtle) */
         .stButton button {
-            background-color: #4F46E5 !important;
+            background-color: #4338ca !important;
             color: white !important;
             border-radius: 8px !important;
-            border: none !important;
+            padding: 0.5rem 1rem !important;
             font-weight: 500 !important;
-            transition: all 0.2s;
-        }
-        .stButton button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
         }
 
         /* Tabs */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 10px;
-            background-color: transparent;
+            gap: 20px;
+            justify-content: center;
         }
         .stTabs [data-baseweb="tab"] {
             background-color: transparent;
-            border: 1px solid #374151;
-            border-radius: 6px;
+            border: none;
             color: #9CA3AF;
-            padding: 8px 16px;
+            font-size: 1rem;
+            padding-bottom: 10px;
         }
         .stTabs [aria-selected="true"] {
-            background-color: #4F46E5 !important;
-            color: white !important;
-            border-color: #4F46E5 !important;
+            color: #6366f1 !important;
+            border-bottom: 2px solid #6366f1 !important;
         }
 
         /* Footer */
@@ -132,21 +121,18 @@ st.markdown("""
             left: 0;
             width: 100%;
             background-color: #0E1117;
-            color: #6B7280;
-            padding: 12px;
-            font-size: 0.75rem;
+            color: #4b5563;
+            padding: 15px;
+            font-size: 0.8rem;
             text-align: center;
-            border-top: 1px solid #374151;
             z-index: 999;
         }
     </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
-col_logo, col_title = st.columns([1, 10])
-with col_title:
-    st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
-    st.caption("Advanced AI Workspace for Research, Coding & Education")
+st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
+st.caption("Advanced AI Workspace")
 
 # --- HELPER FUNCTIONS ---
 def search_web(query):
