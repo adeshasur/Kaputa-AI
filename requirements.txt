@@ -7,3 +7,4 @@ gTTS
 duckduckgo-search
 fpdf
 streamlit-mic-recorder
+youtube-transcript-api

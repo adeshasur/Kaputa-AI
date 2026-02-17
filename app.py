@@ -8,6 +8,7 @@ from duckduckgo_search import DDGS
 from fpdf import FPDF
 import PyPDF2
 import json
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # 1. Environment Setup
 load_dotenv()
@@ -74,15 +75,6 @@ st.markdown("""
             0% { opacity: 0; transform: translateY(-20px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Quiz Styling */
-        .quiz-card {
-            background-color: #262730;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #444;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -111,13 +103,20 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
+def get_video_id(url):
+    if "v=" in url:
+        return url.split("v=")[1].split("&")[0]
+    elif "youtu.be" in url:
+        return url.split("/")[-1]
+    return None
+
 # 6. SIDEBAR & STATE
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/6134/6134346.png", width=80) 
     st.title("Kaputa Control")
     
     # MODE SELECTION 🔄
-    mode = st.radio("Select Mode:", ["💬 Chat Assistant", "📝 Quiz Generator"], index=0)
+    mode = st.radio("Select Mode:", ["💬 Chat Assistant", "📝 Quiz Generator", "📺 Video Summarizer"], index=0)
     
     st.markdown("---")
 
@@ -135,18 +134,6 @@ with st.sidebar:
                 st.success("PDF Analyzed! 🧠", icon="✅")
             except:
                 st.error("File Error", icon="❌")
-
-    st.markdown("---")
-    
-    if mode == "💬 Chat Assistant":
-        with st.expander("💾 Export Options"):
-            st.download_button(
-                label="📄 Save Conversation",
-                data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
-                file_name="kaputa_chat.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
 
 # 7. Model
 try:
@@ -244,32 +231,57 @@ elif mode == "📝 Quiz Generator":
                 except Exception as e:
                     st.error(f"Error generating quiz: {e}")
 
-    # Display Quiz
     if st.session_state.quiz_data:
         score = 0
         with st.form("quiz_form"):
             for i, q in enumerate(st.session_state.quiz_data):
                 st.markdown(f"**Q{i+1}: {q['question']}**")
                 choice = st.radio(f"Select answer for Q{i+1}", q['options'], key=f"q_{i}")
-                
-                # Check directly here for simple scoring logic display later
                 if choice == q['answer']:
                     score += 1
-
             submitted = st.form_submit_button("Submit Answers")
-            
             if submitted:
                 st.success(f"You scored: {score} / 5")
-                # Show correct answers
                 for i, q in enumerate(st.session_state.quiz_data):
                     with st.expander(f"View Answer for Q{i+1}"):
                         st.write(f"Correct Answer: **{q['answer']}**")
-                
                 if score == 5:
                     st.balloons()
-
     elif not uploaded_pdf:
         st.info("👈 Please upload a PDF in the sidebar to start!")
+
+elif mode == "📺 Video Summarizer":
+    # 10. YouTube Logic
+    st.header("📺 YouTube Video Summarizer")
+    st.caption("Paste a YouTube link to get a quick summary.")
+
+    video_url = st.text_input("YouTube Video URL")
+    
+    if video_url:
+        video_id = get_video_id(video_url)
+        if video_id:
+            st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", width=300)
+            
+            if st.button("🎬 Summarize Video", type="primary"):
+                with st.spinner("Watching video..."):
+                    try:
+                        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                        full_text = " ".join([entry['text'] for entry in transcript])
+                        
+                        prompt = f"""
+                        You are a helpful assistant. Summarize the following YouTube video transcript in detail.
+                        Highlight key points and takeaways.
+                        
+                        Transcript: {full_text[:30000]}
+                        """
+                        response = model.generate_content(prompt)
+                        st.subheader("📝 Summary")
+                        st.markdown(response.text)
+                        
+                    except Exception as e:
+                        st.error(f"Could not retrieve transcript. The video might not have captions enabled. Error: {e}")
+        else:
+            st.error("Invalid YouTube URL")
 
 # Footer
 st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
