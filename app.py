@@ -133,31 +133,37 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling - Fixed Width */
         [data-testid="stSidebar"] {
             background-color: #1C1C1E;
             border-right: 1px solid #2C2C2E;
             position: relative;
-            padding-bottom: 80px; /* Space for footer */
+            padding-bottom: 80px;
+            min-width: 280px !important;
+            max-width: 280px !important;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            width: 280px !important;
         }
 
-        /* Footer: Inside Sidebar */
+        /* Footer: Inside Sidebar - Two Lines */
         .footer {
             position: fixed;
             bottom: 10px;
             left: 10px;
-            width: calc(var(--sidebar-width, 336px) - 20px);
+            width: 260px;
             background: rgba(28, 28, 30, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             color: #8E8E93;
-            padding: 10px 12px;
-            border-radius: 16px;
-            font-size: 0.7rem;
+            padding: 8px 10px;
+            border-radius: 14px;
+            font-size: 0.65rem;
             text-align: center;
             z-index: 10000;
             border: 1px solid rgba(255,255,255,0.1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            line-height: 1.4;
         }
 
         /* Hide Default Streamlit Elements */
@@ -240,7 +246,7 @@ with tab1:
         )
 
         # Footer at bottom of sidebar
-        st.markdown('<div class="footer">Kaputa AI Pro v2.0 | Engineered by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
+        st.markdown('<div class="footer">Kaputa AI Pro v2.0<br>Engineered by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
