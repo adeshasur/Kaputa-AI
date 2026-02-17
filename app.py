@@ -24,9 +24,9 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# Initialize theme state (default to Light mode)
+# Initialize theme state (default to Dark mode)
 if "theme" not in st.session_state:
-    st.session_state.theme = "Light"
+    st.session_state.theme = "Dark"
 
 # 2. Page Config
 st.set_page_config(
