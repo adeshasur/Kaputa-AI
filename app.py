@@ -39,26 +39,28 @@ st.markdown("""
         
         :root {
             --apple-blue: #007AFF;
-            --apple-gray: #1C1C1E;
-            --apple-text: #F2F2F7;
+            --bg-main: #F9F9F9;
+            --bg-card: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #424245;
+            --text-tertiary: #86868B;
         }
 
         html, body, [class*="css"] {
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-            color: var(--apple-text);
-            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--bg-main);
         }
-
 
 
         /* iOS Large Title */
         .main-title {
             font-size: 3.5rem;
             font-weight: 700;
-            background: linear-gradient(180deg, #FFFFFF 0%, #888888 100%);
+            background: linear-gradient(180deg, #1D1D1F 0%, #424245 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 0px;
+            margin-bottom: 5px;
             text-align: center;
             letter-spacing: -1.5px;
         }
@@ -68,50 +70,74 @@ st.markdown("""
             font-size: 1rem;
             vertical-align: top;
             font-weight: 600;
-            background: rgba(0, 122, 255, 0.1);
+            background: rgba(0, 122, 255, 0.12);
             padding: 4px 10px;
             border-radius: 20px;
         }
 
-        /* iOS Cards (Rounded 20px) */
-        .result-card {
-            background-color: #1C1C1E;
-            border-radius: 22px;
-            padding: 24px;
-            margin-top: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border: 1px solid #2C2C2E;
+        /* Sidebar: Glassmorphism Effect */
+        [data-testid="stSidebar"] {
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0, 0, 0, 0.08);
+            position: relative;
+            padding-bottom: 80px;
+            min-width: 280px !important;
+            max-width: 280px !important;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            width: 280px !important;
+            background: transparent;
         }
 
-        /* Inputs: Floating Island Style */
+        /* White Cards with Soft Shadows */
+        .result-card {
+            background-color: var(--bg-card);
+            border-radius: 20px;
+            padding: 24px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        /* Inputs: iMessage Style */
         .stTextInput input, .stTextArea textarea {
-            background-color: #2C2C2E !important;
-            border: none !important;
-            color: white !important;
+            background-color: var(--bg-card) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            color: var(--text-primary) !important;
             border-radius: 18px !important;
             padding: 16px !important;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .stTextInput input:focus, .stTextArea textarea:focus {
+            border-color: var(--apple-blue) !important;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
         }
         
-        /* Buttons: Pill Shaped */
+        /* Buttons: Pill Shaped Premium */
         .stButton button {
             background-color: #007AFF !important;
             color: white !important;
-            border-radius: 9999px !important; /* Pill shape */
+            border-radius: 9999px !important;
             padding: 10px 24px !important;
             font-weight: 600 !important;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
             border: none !important;
-            transition: transform 0.1s ease;
+            transition: all 0.2s ease;
+        }
+        .stButton button:hover {
+            background-color: #0051D5 !important;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
         }
         .stButton button:active {
-            transform: scale(0.96);
+            transform: scale(0.97);
         }
 
-        /* Tabs: Segmented Control Style */
+        /* Tabs: Light Segmented Control */
         .stTabs [data-baseweb="tab-list"] {
             gap: 8px;
-            background-color: #1C1C1E;
+            background-color: rgba(0, 0, 0, 0.05);
             padding: 5px;
             border-radius: 16px;
             display: inline-flex;
@@ -122,55 +148,56 @@ st.markdown("""
         .stTabs [data-baseweb="tab"] {
             background-color: transparent;
             border: none;
-            color: #8E8E93;
+            color: var(--text-tertiary);
             font-size: 0.9rem;
             padding: 8px 20px;
             border-radius: 12px;
         }
         .stTabs [aria-selected="true"] {
-            background-color: #3A3A3C !important;
-            color: #FFFFFF !important;
+            background-color: var(--bg-card) !important;
+            color: var(--text-primary) !important;
             font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        /* Sidebar Styling - Fixed Width */
-        [data-testid="stSidebar"] {
-            background-color: #1C1C1E;
-            border-right: 1px solid #2C2C2E;
-            position: relative;
-            padding-bottom: 80px;
-            min-width: 280px !important;
-            max-width: 280px !important;
-        }
-        [data-testid="stSidebar"] > div:first-child {
-            width: 280px !important;
-        }
-
-        /* Footer: Inside Sidebar - Two Lines */
+        /* Footer: Inside Sidebar - Elegant Grey */
         .footer {
             position: fixed;
             bottom: 10px;
             left: 10px;
             width: 260px;
-            background: rgba(28, 28, 30, 0.95);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            color: #8E8E93;
+            color: var(--text-tertiary);
             padding: 8px 10px;
             border-radius: 14px;
             font-size: 0.65rem;
             text-align: center;
             z-index: 10000;
-            border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             line-height: 1.4;
         }
 
         /* Hide Default Streamlit Elements */
         footer {visibility: hidden;}
         #MainMenu {visibility: hidden;}
+        
+        /* Crow Logo at Top */
+        .crow-logo {
+            text-align: center;
+            font-size: 3.5rem;
+            padding: 20px 0 10px 0;
+            filter: grayscale(20%);
+        }
     </style>
 """, unsafe_allow_html=True)
+
+# Crow Logo in Sidebar (Will appear in all tabs)
+with st.sidebar:
+    st.markdown('<div class="crow-logo">🦅</div>', unsafe_allow_html=True)
+    st.markdown("---")
 
 # --- HEADER SECTION ---
 st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
