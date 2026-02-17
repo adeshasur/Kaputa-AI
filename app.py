@@ -148,13 +148,13 @@ with tab1:
 
     for message in st.session_state.messages:
         role = message["role"]
-        avatar_icon = "🐦" if role == "model" else "🧑💻"
+        avatar_icon = "🐦" if role == "model" else "👤"
         role_name = "assistant" if role == "model" else "user"
         with st.chat_message(role_name, avatar=avatar_icon):
             st.markdown(message["content"])
 
     if prompt := st.chat_input("Message Kaputa AI..."):
-        with st.chat_message("user", avatar="🧑💻"):
+        with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
