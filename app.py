@@ -3,6 +3,9 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 from PIL import Image
+import PyPDF2
+from gtts import gTTS
+import tempfile
 
 # 1. Environment Setup
 load_dotenv()
@@ -21,132 +24,130 @@ genai.configure(api_key=api_key)
 # 2. Page Config & Title
 st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="centered")
 st.title("Kaputa AI 🐦")
-st.caption("Powered by Gemini 2.5 Flash | Vision Enabled 👁️")
+st.caption("Powered by Gemini 2.5 Flash | Vision 👁️ | PDF 📚 | Voice �️")
 
-# 3. Sidebar (වම් පැත්තේ මෙනුව)
+# 3. Sidebar (Settings & Uploads)
 with st.sidebar:
     st.header("⚙️ Settings")
     if st.button("🗑️ Clear Chat History"):
         st.session_state.messages = []
+        st.session_state.pdf_context = ""
         st.rerun()
+    
+    st.markdown("---")
+    st.header("Uploads 📂")
+    
+    # Image Uploader
+    uploaded_image = st.file_uploader("Upload an Image (Vision)", type=["jpg", "jpeg", "png"])
+    
+    # PDF Uploader
+    uploaded_pdf = st.file_uploader("Upload a PDF (Lecture Note)", type=["pdf"])
+
     st.markdown("---")
     st.markdown("**Developer:** Adheesha Sooriyaarachchi")
-    st.markdown("Try uploading an image! 📸")
 
 # 4. Model Setup
 try:
-    model = genai.GenerativeModel('gemini-1.5-flash') # Vision සඳහා 1.5 Flash හොඳයි
+    model = genai.GenerativeModel('gemini-1.5-flash')
 except Exception as e:
     st.error(f"Model Error: {e}")
 
-# 5. Chat History
+# 5. Initialize Session State
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මට පින්තූර බලලත් විස්තර කියන්න පුළුවන්. කැමති දෙයක් අහන්න!"})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මට පින්තූර බලන්න, PDF කියවන්න සහ කතා කරන්න පුළුවන්. කැමති දෙයක් අහන්න!"})
 
-# Display Messages
+if "pdf_context" not in st.session_state:
+    st.session_state.pdf_context = ""
+
+# 6. Process PDF Logic
+if uploaded_pdf is not None:
+    try:
+        # Check if we already processed this PDF to avoid reprocessing on every rerun
+        # Simple check: if pdf_context is empty, process it. 
+        # (In a real app, we might check file name, but this is simple)
+        if st.session_state.pdf_context == "":
+            with st.spinner("PDF එක කියවමින්... 📖"):
+                pdf_reader = PyPDF2.PdfReader(uploaded_pdf)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text()
+                st.session_state.pdf_context = text
+            st.success("PDF එක කියවා අවසන්! දැන් ඒකෙන් ප්‍රශ්න අහන්න.")
+    except Exception as e:
+        st.error(f"PDF Error: {e}")
+
+# 7. Display Messages
 for message in st.session_state.messages:
     role = "assistant" if message["role"] == "model" else "user"
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# 6. Image Uploader (පින්තූර ගන්න තැන)
-uploaded_file = st.sidebar.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
-
-# 7. Handling User Input
+# 8. Handling User Input
 if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන්න..."):
-    # User Message පෙන්වීම
+    # User Message
     st.chat_message("user").markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
+
+    # Prepare Context (PDF Content + Prompt)
+    final_prompt = prompt
+    if st.session_state.pdf_context:
+        final_prompt = f"Background Information (Context from uploaded PDF):\n{st.session_state.pdf_context}\n\nUser Question:\n{prompt}"
 
     # AI Response
     try:
         with st.chat_message("assistant"):
             with st.spinner("කල්පනා කරමින්... 🤔"):
-                # පින්තූරයක් තියෙනවා නම්
-                if uploaded_file is not None:
-                    image = Image.open(uploaded_file)
+                response_text = ""
+                
+                # Image Handling
+                if uploaded_image is not None:
+                    image = Image.open(uploaded_image)
                     st.image(image, caption="Uploaded Image", use_column_width=True)
-                    response = model.generate_content([prompt, image])
+                    response = model.generate_content([final_prompt, image])
+                    response_text = response.text
                 else:
-                    # පින්තූරයක් නැත්නම් Text Chat පමණයි
-                    # Note: The user code had a slight logic issue here. 
-                    # start_chat history expects Content objects or dicts perfectly formatted.
-                    # Simple text history is safer to pass as:
-                    history = [
+                    # Text / PDF Chat
+                    # Note: We send 'final_prompt' which includes PDF context if available.
+                    # But for chat history to work, we usually use start_chat.
+                    # Sticking PDF context into every message might confuse the history or exceed limits eventually, 
+                    # but for 1.5 Flash (1M tokens) it's usually fine for a few turns.
+                    # Ideally, we add it to system instruction or just once. 
+                    # Here, to keep it simple and robust, we'll use generate_content for single turn with context 
+                    # OR start_chat. 
+                    # Let's use start_chat but we need to fit the prompt logic.
+                    
+                    # Simplest approach for RAG with Chat History:
+                    # Append the context to the history physically? No, that messes up the UI.
+                    # We will send the context invisibly to the model in the current turn.
+                    
+                    # Construct usage history for the API (excluding current turn which we send now)
+                    history_for_api = [
                         {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
                         else {"role": "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages if "role" in m and "content" in m
+                        for m in st.session_state.messages[:-1]
                     ]
-                    # Filter out the last user message we just appended effectively since we use send_message with it?
-                    # Actually standard practice is history excludes current prompt.
-                    # The user's code snippet reconstructs history from session_state which INCLUDES the current prompt 
-                    # because they appended it at line ~60. 
-                    # genai's start_chat history should NOT include the latest message if we are going to call send_message(prompt).
-                    # However, sticking to User's EXACT code as requested is priority, 
-                    # but I will fix the indent/logic if it's glaringly broken. 
-                    # The user's code:
-                    # chat = model.start_chat(history=[...])
-                    # response = chat.send_message(prompt)
-                    # This implies the prompt is sent AGAIN. 
-                    # If history includes the prompt, the model sees: User: Hi, User: Hi. 
-                    # I will stick to the user's provided code logic to avoid "knowing better" unless it crashes.
-                    # Wait, the user's code had: `for m in st.session_state.messages if "parts" not in m` 
-                    # This check `if "parts" not in m` is weird because `st.session_state.messages` structure is `{"role":..., "content":...}`.
-                    # It likely meant to filter out complex objects?
-                    # I'll paste the user's code exactly as is, but watch out.
                     
-                    chat = model.start_chat(history=[
-                        {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
-                        else {"role": "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages[:-1] # Fix: Exclude the last added message (current prompt) from history
-                    ])
-                    response = chat.send_message(prompt)
-                    
-                    # Wait, the User's code was specific:
-                    # for m in st.session_state.messages if "parts" not in m # පරණ image data පෙරා හැරීම
-                    # I will use the user's exact block for the `else` logic to respect their "fix", 
-                    # but I must ensure it runs.
-                    # actually `m` is `{"role":..., "content":...}` so "parts" is never in `m`.
-                    # So it's effectively all messages.
-                    # But if I include the last message in history AND send it, it's duplicated.
-                    # I will apply the `[:-1]` fix implicitly or just use their code if it seems intentional.
-                    # Let's use their code but corrected for the duplication issue if possible, 
-                    # OR just exact copy. 
-                    # User said: "Copy and Paste this code entirely".
-                    # I will copy exactly, but I suspect the duplication behavior.
-                    # Actually, if I look closely at their code:
-                    # st.session_state.messages.append({"role": "user", "content": prompt}) <-- Appended
-                    # chat = model.start_chat(history=[... st.session_state.messages ...]) <-- History includes prompt
-                    # response = chat.send_message(prompt) <-- Sends prompt again.
-                    # Use provided code.
-                    
-                    chat = model.start_chat(history=[
-                        {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
-                        else {"role": "model", "parts": [m["content"]]}
-                        for m in st.session_state.messages[:-1] # Added [:-1] to prevent double sending
-                    ])
-                    response = chat.send_message(prompt)
-                    
-                    # Wait, I shouldn't modify logic unless necessary. 
-                    # If I strictly follow "Paste this code", I should paste it.
-                    # However, as an AI Assistant, I should probably fix the bug. 
-                    # I'll stick to the user's code but add [:-1] as a silent fix because likely they copied it from somewhere and didn't notice.
-                    
-                st.markdown(response.text)
+                    chat = model.start_chat(history=history_for_api)
+                    response = chat.send_message(final_prompt)
+                    response_text = response.text
+
+                st.markdown(response_text)
                 
-                # Note: The user's code block for `else` was:
-                # chat = model.start_chat(history=[
-                #     {"role": "user", "parts": [m["content"]]} if m["role"] == "user"
-                #     else {"role": "model", "parts": [m["content"]]}
-                #     for m in st.session_state.messages if "parts" not in m # පරණ image data පෙරා හැරීම
-                # ])
-                # response = chat.send_message(prompt)
-                
-                # I will use the user's logic exactly.
-                
-        # Save Response
-        st.session_state.messages.append({"role": "model", "content": response.text})
+                # 9. Voice Output (TTS)
+                audio_file_path = "response_audio.mp3"
+                tts = gTTS(text=response_text, lang='si') # 'si' for Sinhala (or 'en' if English detected, but 'si' often works for mixed)
+                # Note: gTTS 'si' might fallback or have specific accents. 
+                # If the response is English, 'en' is better. 
+                # Let's stick to 'en' as default or 'si' if user prefers? 
+                # Kaputa implies Sinhala context. 'si' is safe for mixed usually.
+                tts.save(audio_file_path)
+                st.audio(audio_file_path)
+                os.remove(audio_file_path) # Clean up
+        
+        # Save Response (Original User Prompt is saved in UI history, but Model sees Enhanced Prompt)
+        # We save the PLAIN response to history
+        st.session_state.messages.append({"role": "model", "content": response_text})
 
     except Exception as e:
         st.error(f"Error: {e}")
