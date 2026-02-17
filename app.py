@@ -404,8 +404,8 @@ def get_video_id(url):
 
 # --- MODEL (Gemini 2.0 Flash) ---
 try:
-    # Using Gemini 1.5 Flash for stability (1500 messages/day limit)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # Using full model path for better API compatibility
+    model = genai.GenerativeModel('models/gemini-1.5-flash')
 except:
     st.error("System Error: Model connection failed.")
 
