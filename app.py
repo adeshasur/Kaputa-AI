@@ -116,7 +116,7 @@ with st.sidebar:
     st.title("Kaputa Control")
     
     # MODE SELECTION 🔄
-    mode = st.radio("Select Mode:", ["💬 Chat Assistant", "📝 Quiz Generator", "📺 Video Summarizer"], index=0)
+    mode = st.radio("Select Mode:", ["💬 Chat Assistant", "📝 Quiz Generator", "📺 Video Summarizer", "💻 Developer Mode"], index=0)
     
     st.markdown("---")
 
@@ -251,7 +251,6 @@ elif mode == "📝 Quiz Generator":
         st.info("👈 Please upload a PDF in the sidebar to start!")
 
 elif mode == "📺 Video Summarizer":
-    # 10. YouTube Logic
     st.header("📺 YouTube Video Summarizer")
     st.caption("Paste a YouTube link to get a quick summary.")
 
@@ -282,6 +281,39 @@ elif mode == "📺 Video Summarizer":
                         st.error(f"Could not retrieve transcript. The video might not have captions enabled. Error: {e}")
         else:
             st.error("Invalid YouTube URL")
+
+elif mode == "💻 Developer Mode":
+    st.header("💻 Developer Code Assistant")
+    st.caption("Paste your code below to debug, explain, or optimize it.")
+
+    code_input = st.text_area("Paste Code Here", height=200)
+    
+    c1, c2, c3 = st.columns(3)
+    
+    if code_input:
+        with c1:
+            if st.button("🐛 Debug Code", type="primary", use_container_width=True):
+                with st.spinner("Debugging..."):
+                    prompt = f"Identify and fix bugs in this code:\n\n{code_input}"
+                    response = model.generate_content(prompt)
+                    st.subheader("🐛 Debug Report")
+                    st.markdown(response.text)
+        
+        with c2:
+            if st.button("📝 Explain Code", use_container_width=True):
+                with st.spinner("Analyzing..."):
+                    prompt = f"Explain this code step-by-step:\n\n{code_input}"
+                    response = model.generate_content(prompt)
+                    st.subheader("📝 Code Explanation")
+                    st.markdown(response.text)
+        
+        with c3:
+            if st.button("✨ Optimize Code", use_container_width=True):
+                with st.spinner("Optimizing..."):
+                    prompt = f"Optimize this code for performance and readability:\n\n{code_input}"
+                    response = model.generate_content(prompt)
+                    st.subheader("✨ Optimization Suggestions")
+                    st.markdown(response.text)
 
 # Footer
 st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
