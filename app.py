@@ -8,6 +8,7 @@ from duckduckgo_search import DDGS
 from fpdf import FPDF
 import PyPDF2
 import json
+from youtube_transcript_api import YouTubeTranscriptApi
 
 # 1. Environment Setup
 load_dotenv()
@@ -72,6 +73,13 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
+def get_video_id(url):
+    if "v=" in url:
+        return url.split("v=")[1].split("&")[0]
+    elif "youtu.be" in url:
+        return url.split("/")[-1]
+    return None
+
 # --- MODEL ---
 try:
     model = genai.GenerativeModel('gemini-2.5-flash')
@@ -79,12 +87,12 @@ except:
     st.error("System Error: Model not found.")
 
 # ==========================================
-# 🚀 MAIN TABS (Chat & Quiz)
+# 🚀 MAIN TABS (Chat | Quiz | YouTube | Dev)
 # ==========================================
-tab1, tab2 = st.tabs(["💬 Chat Assistant", "📝 Quiz Generator"])
+tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "📝 Quiz", "📺 YouTube", "💻 Dev"])
 
 # ------------------------------------------
-# TAB 1: CHAT ASSISTANT (කලින් තිබුණු එක)
+# TAB 1: CHAT ASSISTANT
 # ------------------------------------------
 with tab1:
     # Sidebar for Chat
@@ -163,60 +171,106 @@ with tab1:
                     st.error(f"Error: {e}")
 
 # ------------------------------------------
-# TAB 2: QUIZ GENERATOR (අලුත් එක) 📝
+# TAB 2: QUIZ GENERATOR 📝
 # ------------------------------------------
 with tab2:
     st.header("📝 Auto Quiz Generator")
     st.caption("Paste your notes below, and Kaputa will create a quiz for you!")
     
-    # Input Text
-    quiz_context = st.text_area("Paste Text or Notes here:", height=200, placeholder="Enter the content you want to generate a quiz from...")
-    
-    # Question Count
+    quiz_context = st.text_area("Paste Text or Notes here:", height=200, placeholder="Enter content...")
     num_questions = st.slider("Number of Questions:", 1, 10, 5)
     
     if st.button("🚀 Generate Quiz", type="primary"):
         if quiz_context:
             with st.spinner("Generating Quiz Questions..."):
                 try:
-                    # Prompting Gemini to give JSON output
                     quiz_prompt = f"""
                     Create {num_questions} multiple choice questions (MCQ) based on this text:
                     "{quiz_context}"
-                    
                     Output ONLY a valid JSON array like this:
-                    [
-                        {{"question": "Question 1", "options": ["A", "B", "C", "D"], "answer": "Correct Option"}}
-                    ]
-                    Do not add any markdown formatting or explanations. Just the JSON.
+                    [{{ "question": "Q1", "options": ["A", "B", "C", "D"], "answer": "Correct Option" }}]
                     """
-                    
                     response = model.generate_content(quiz_prompt)
-                    
-                    # Formatting cleanup
                     clean_text = response.text.strip()
-                    if clean_text.startswith("```json"):
-                        clean_text = clean_text[7:-3]
-                    
-                    quiz_data = json.loads(clean_text)
-                    st.session_state.quiz_data = quiz_data # Save to session
-                    st.success("Quiz Generated! 👇")
-                    
+                    if clean_text.startswith("```json"): clean_text = clean_text[7:-3]
+                    st.session_state.quiz_data = json.loads(clean_text)
+                    st.success("Quiz Generated!")
                 except Exception as e:
-                    st.error(f"Error generating quiz: {e}")
+                    st.error(f"Error: {e}")
         else:
-            st.warning("Please enter some text first!")
+            st.warning("Please enter text!")
 
-    # Display Quiz
     if "quiz_data" in st.session_state:
         st.markdown("---")
-        score = 0
         for i, q in enumerate(st.session_state.quiz_data):
             st.subheader(f"{i+1}. {q['question']}")
-            user_answer = st.radio(f"Select answer for Q{i+1}:", q['options'], key=f"q_{i}")
+            user_answer = st.radio(f"Select answer:", q['options'], key=f"q_{i}")
+            if st.checkbox(f"Check Answer {i+1}", key=f"ans_{i}"):
+                if user_answer == q['answer']: st.success("Correct! ✅")
+                else: st.error(f"Wrong! Answer: {q['answer']}")
+
+# ------------------------------------------
+# TAB 3: YOUTUBE SUMMARIZER 📺
+# ------------------------------------------
+with tab3:
+    st.header("📺 YouTube Video Summarizer")
+    st.caption("Paste a YouTube link to get a quick summary.")
+
+    video_url = st.text_input("YouTube Video URL")
+    
+    if video_url:
+        video_id = get_video_id(video_url)
+        if video_id:
+            st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", width=300)
             
-            if st.checkbox(f"Show Answer for Q{i+1}", key=f"ans_{i}"):
-                if user_answer == q['answer']:
-                    st.success("Correct! ✅")
-                else:
-                    st.error(f"Wrong! Correct answer: {q['answer']}")
+            if st.button("🎬 Summarize Video", type="primary"):
+                with st.spinner("Watching video..."):
+                    try:
+                        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                        full_text = " ".join([entry['text'] for entry in transcript])
+                        
+                        prompt = f"""
+                        Summarize this YouTube video transcript. Highlight key points.
+                        Transcript: {full_text[:30000]}
+                        """
+                        response = model.generate_content(prompt)
+                        st.subheader("📝 Summary")
+                        st.markdown(response.text)
+                    except Exception as e:
+                        st.error(f"Error: {e}")
+        else:
+            st.error("Invalid YouTube URL")
+
+# ------------------------------------------
+# TAB 4: DEVELOPER MODE 💻
+# ------------------------------------------
+with tab4:
+    st.header("💻 Developer Code Assistant")
+    st.caption("Debug, Explain, or Optimize your code.")
+
+    code_input = st.text_area("Paste Code Here", height=200)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    if code_input:
+        with col1:
+            if st.button("🐛 Debug", use_container_width=True):
+                with st.spinner("Debugging..."):
+                    response = model.generate_content(f"Fix bugs in:\n{code_input}")
+                    st.subheader("🐛 Report")
+                    st.markdown(response.text)
+        with col2:
+            if st.button("📝 Explain", use_container_width=True):
+                with st.spinner("Explaining..."):
+                    response = model.generate_content(f"Explain code:\n{code_input}")
+                    st.subheader("📝 Explanation")
+                    st.markdown(response.text)
+        with col3:
+            if st.button("✨ Optimize", use_container_width=True):
+                with st.spinner("Optimizing..."):
+                    response = model.generate_content(f"Optimize code:\n{code_input}")
+                    st.subheader("✨ Suggestions")
+                    st.markdown(response.text)
+
+# Footer
+st.markdown('<div style="text-align: center; color: #666; padding: 20px;">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
