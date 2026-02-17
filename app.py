@@ -24,9 +24,9 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# Initialize theme state (default to Dark mode)
+# Initialize theme state (default to Light mode for Apple aesthetic)
 if "theme" not in st.session_state:
-    st.session_state.theme = "Dark"
+    st.session_state.theme = "Light"
 
 # 2. Page Config
 st.set_page_config(
@@ -360,9 +360,13 @@ def get_theme_css(theme):
 # Apply current theme CSS
 st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 
-# Crow Logo in Sidebar (Will appear in all tabs)
+# Crow Logo in Sidebar
 with st.sidebar:
-    st.markdown('<div class="crow-logo">🦅</div>', unsafe_allow_html=True)
+    st.markdown('''
+        <div style="text-align: center; padding: 20px 0 15px 0;">
+            <img src="https://cdn-icons-png.flaticon.com/512/12222/12222560.png" alt="Kaputa Logo" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+        </div>
+    ''', unsafe_allow_html=True)
     st.markdown("---")
     
     # Theme Toggle
