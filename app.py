@@ -49,11 +49,7 @@ st.markdown("""
             background-color: #000000;
         }
 
-        /* Sidebar: Translucent iOS feel */
-        [data-testid="stSidebar"] {
-            background-color: #1C1C1E;
-            border-right: 1px solid #2C2C2E;
-        }
+
 
         /* iOS Large Title */
         .main-title {
@@ -137,27 +133,31 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Footer: Glassmorphism */
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {
+            background-color: #1C1C1E;
+            border-right: 1px solid #2C2C2E;
+            position: relative;
+            padding-bottom: 80px; /* Space for footer */
+        }
+
+        /* Footer: Inside Sidebar */
         .footer {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto;
-            background: rgba(28, 28, 30, 0.85); /* Blur bg */
+            bottom: 10px;
+            left: 10px;
+            width: calc(var(--sidebar-width, 336px) - 20px);
+            background: rgba(28, 28, 30, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             color: #8E8E93;
-            padding: 12px 24px;
-            border-radius: 999px;
-            font-size: 0.75rem;
+            padding: 10px 12px;
+            border-radius: 16px;
+            font-size: 0.7rem;
             text-align: center;
             z-index: 10000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             border: 1px solid rgba(255,255,255,0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         /* Hide Default Streamlit Elements */
