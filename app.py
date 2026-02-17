@@ -22,12 +22,60 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# 2. Page Config
-st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="centered")
-st.title("Kaputa AI 🐦")
-st.caption("Gemini 2.5 Flash | Vision 👁️ | Web Search 🌍 | PDF 📚")
+# 2. Page Config (Browser Tab එකේ නම සහ Icon එක)
+st.set_page_config(
+    page_title="Kaputa AI",
+    page_icon="🐦",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# 3. Helper Functions
+# --- 3. CUSTOM CSS & STYLING (මේකෙන් තමයි ලස්සන කරන්නේ) ---
+st.markdown("""
+    <style>
+        /* Google Font Import */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Kaputa Title Gradient Style */
+        .title-text {
+            font-size: 3rem;
+            font-weight: 800;
+            background: -webkit-linear-gradient(45deg, #FF4B4B, #FF914D);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 0px;
+        }
+        
+        .subtitle-text {
+            text-align: center;
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        /* Sidebar Styling */
+        [data-testid="stSidebar"] {
+            background-color: #f0f2f6;
+        }
+        
+        /* Button Styling */
+        .stButton button {
+            border-radius: 10px;
+            font-weight: 600;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# --- 4. HEADER SECTION ---
+st.markdown('<p class="title-text">Kaputa AI 🐦</p>', unsafe_allow_html=True)
+st.markdown('<p class="subtitle-text">Your Smart Assistant | Vision 👁️ | Voice 🗣️ | Web 🌍</p>', unsafe_allow_html=True)
+
+# 5. Helper Functions
 def search_web(query):
     try:
         results = DDGS().text(query, max_results=3)
@@ -48,66 +96,82 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
-# 4. Sidebar Tools (Only Tools, No New Chat Button)
+# 6. SIDEBAR (Enhanced Icons)
 with st.sidebar:
-    st.header("🛠️ Tools")
+    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712035.png", width=80) # Logo එකක් වගේ
+    st.title("Settings")
     
-    # Web Search Toggle
-    enable_search = st.toggle("🌍 Enable Web Search")
+    st.markdown("### 🛠️ Features")
+    
+    # Web Search Toggle with distinct styling
+    enable_search = st.toggle("🌍 Web Search Mode")
+    if enable_search:
+        st.info("Kaputa is now connected to the Internet! 🌐")
     
     st.markdown("---")
     
     # PDF Upload
-    st.subheader("📚 Study Buddy")
-    uploaded_pdf = st.file_uploader("Upload PDF Note", type="pdf")
+    st.markdown("### 📚 Knowledge Base")
+    uploaded_pdf = st.file_uploader("Drop your PDF Lecture Note", type="pdf")
     pdf_text = ""
     if uploaded_pdf:
         try:
             reader = PyPDF2.PdfReader(uploaded_pdf)
             for page in reader.pages:
                 pdf_text += page.extract_text()
-            st.success("PDF Loaded! ✅")
+            st.success("PDF Analyzed Successfully! ✅")
         except:
-            st.error("PDF Error")
+            st.error("Error reading PDF ❌")
 
     st.markdown("---")
     
     # Download Chat
+    st.markdown("### 💾 Export")
     st.download_button(
-        label="💾 Download Chat (PDF)",
+        label="� Download Chat as PDF",
         data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
         file_name="kaputa_chat.pdf",
-        mime="application/pdf"
+        mime="application/pdf",
+        use_container_width=True
     )
 
-# 5. Model Setup
+# 7. Model Setup
 try:
     model = genai.GenerativeModel('gemini-2.5-flash')
 except:
-    st.error("Model Error")
+    st.error("System Error: Model not found.")
 
-# 6. Chat History Initialization
+# 8. Chat History Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. කැමති දෙයක් අහන්න."})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මම අලුත් පෙනුමකින් ආවා! 😎 මොනවද කරන්නේ?"})
 
-# Display Chat History
+# 9. Display Chat History (With Custom Avatars) 🧑💻🐦
 for message in st.session_state.messages:
-    role = "assistant" if message["role"] == "model" else "user"
-    with st.chat_message(role):
+    role = message["role"]
+    
+    # Custom Avatars තෝරා ගැනීම
+    if role == "model":
+        avatar_icon = "🐦" # Kaputa Icon
+        role_name = "assistant"
+    else:
+        avatar_icon = "🧑💻" # User Icon
+        role_name = "user"
+
+    with st.chat_message(role_name, avatar=avatar_icon):
         st.markdown(message["content"])
 
-# 7. Main Input Logic
-prompt = st.chat_input("මොනවද දැනගන්න ඕන?...")
+# 10. Main Input Logic
+prompt = st.chat_input("Ask Kaputa anything...")
 
 if prompt:
     # User Message
-    with st.chat_message("user"):
+    with st.chat_message("user", avatar="🧑💻"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
     # AI Response
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🐦"):
         with st.spinner("Thinking..."):
             response_text = ""
             try:
