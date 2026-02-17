@@ -22,11 +22,10 @@ genai.configure(api_key=api_key)
 # 2. Page Config
 st.set_page_config(page_title="Kaputa AI", page_icon="🐦")
 st.title("Kaputa AI 🐦")
-st.caption("Developed by Adheesha | Powered by Gemini Pro")
+st.caption("Developed by Adheesha | Powered by Gemini 1.5 Flash")
 
-# 3. Model Setup (Changed to gemini-pro for stability)
-# system_instruction අයින් කළා මොකද gemini-pro එකේ පරණ version එකේ ඒක support කරන්නේ නෑ.
-model = genai.GenerativeModel("gemini-pro")
+# 3. Model Setup (Changed to gemini-1.5-flash for better availability)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # 4. Chat History Setup
 if "messages" not in st.session_state:
