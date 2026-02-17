@@ -17,20 +17,24 @@ if not api_key:
     st.error("API Key එක හමු නොවීය. කරුණාකර Settings වල Secrets පරීක්ෂා කරන්න.")
     st.stop()
 
+# Gemini Configure
 genai.configure(api_key=api_key)
 
 # 2. Page Config
 st.set_page_config(page_title="Kaputa AI", page_icon="🐦")
 st.title("Kaputa AI 🐦")
-st.caption("Developed by Adheesha | Powered by Gemini 2.0 Flash Lite")
+st.caption("Developed by Adheesha | Powered by Gemini 1.5 Flash")
 
-# 3. Model Setup (Changed to gemini-2.0-flash-lite for better quota handling)
-model = genai.GenerativeModel("gemini-2.0-flash-lite")
+# 3. Model Setup (Changed to gemini-1.5-flash which is STABLE and FREE)
+try:
+    model = genai.GenerativeModel("gemini-1.5-flash")
+except Exception as e:
+    st.error(f"Model Error: {e}")
 
 # 4. Chat History Setup
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    # Kaputa ගේ පළවෙනි මැසේජ් එක මැනුවලි දාමු
+    # Kaputa ගේ පළවෙනි මැසේජ් එක
     st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම කපුටා (Kaputa). මම Adheesha හදපු AI සහයකයා. මොනවද දැනගන්න ඕන?"})
 
 # 5. Display History
@@ -64,4 +68,5 @@ if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන�
         st.session_state.messages.append({"role": "model", "content": response.text})
         
     except Exception as e:
-        st.error(f"Error එකක් ආවා: {e}")
+        # Error handling - විශේෂයෙන් Quota errors
+        st.error(f"පොඩි දෝෂයක්: {e}")
