@@ -404,8 +404,8 @@ def get_video_id(url):
 
 # --- MODEL (Gemini 2.0 Flash) ---
 try:
-    # Using explicit model_name parameter for API stability
-    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
+    # Using models/ prefix to avoid 404 errors
+    model = genai.GenerativeModel(model_name='models/gemini-1.5-flash')
 except:
     st.error("System Error: Model connection failed.")
 
