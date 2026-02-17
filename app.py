@@ -22,7 +22,7 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# 2. Page Config (Browser Tab එකේ නම සහ Icon එක)
+# 2. Page Config
 st.set_page_config(
     page_title="Kaputa AI",
     page_icon="🐦",
@@ -30,50 +30,84 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 3. CUSTOM CSS & STYLING (මේකෙන් තමයි ලස්සන කරන්නේ) ---
+# --- 3. ADVANCED CUSTOM CSS (The Magic 🎨) ---
 st.markdown("""
     <style>
-        /* Google Font Import */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        /* Import Google Font */
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap');
         
+        /* Apply Font */
         html, body, [class*="css"] {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Outfit', sans-serif;
         }
 
-        /* Kaputa Title Gradient Style */
-        .title-text {
-            font-size: 3rem;
-            font-weight: 800;
-            background: -webkit-linear-gradient(45deg, #FF4B4B, #FF914D);
+        /* Gradient Title */
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #FF4B4B, #FF914D, #FFC700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             text-align: center;
-            margin-bottom: 0px;
+            margin-bottom: 10px;
+            animation: fadeIn 2s ease-in-out;
         }
         
-        .subtitle-text {
+        .sub-title {
             text-align: center;
-            font-size: 1rem;
-            color: #888;
-            margin-bottom: 20px;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        /* Advanced Chat Bubbles */
+        /* Note: Streamlit classes change, so we target generic elements cautiously */
+        
+        .stChatMessage {
+            background-color: transparent;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stChatMessage:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transform: translateY(-2px);
         }
 
         /* Sidebar Styling */
         [data-testid="stSidebar"] {
-            background-color: #f0f2f6;
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            border-right: 1px solid #dee2e6;
         }
-        
-        /* Button Styling */
-        .stButton button {
-            border-radius: 10px;
-            font-weight: 600;
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            color: #888;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 10px;
+            border-top: 1px solid #eee;
+            z-index: 1000;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(-20px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER SECTION ---
-st.markdown('<p class="title-text">Kaputa AI 🐦</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle-text">Your Smart Assistant | Vision 👁️ | Voice 🗣️ | Web 🌍</p>', unsafe_allow_html=True)
+# --- 4. HEADER ---
+st.markdown('<div class="main-title">Kaputa AI 🐦</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title"><b>Smart Assistant</b> | Vision 👁️ | Voice 🗣️ | Web 🌍 | Knowledge 📚</div>', unsafe_allow_html=True)
 
 # 5. Helper Functions
 def search_web(query):
@@ -96,108 +130,94 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
-# 6. SIDEBAR (Enhanced Icons)
+# 6. SIDEBAR
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/4712/4712035.png", width=80) # Logo එකක් වගේ
-    st.title("Settings")
+    st.image("https://cdn-icons-png.flaticon.com/512/6134/6134346.png", width=80) 
+    st.title("Kaputa Control")
     
-    st.markdown("### 🛠️ Features")
-    
-    # Web Search Toggle with distinct styling
-    enable_search = st.toggle("🌍 Web Search Mode")
-    if enable_search:
-        st.info("Kaputa is now connected to the Internet! 🌐")
-    
-    st.markdown("---")
-    
-    # PDF Upload
-    st.markdown("### 📚 Knowledge Base")
-    uploaded_pdf = st.file_uploader("Drop your PDF Lecture Note", type="pdf")
-    pdf_text = ""
-    if uploaded_pdf:
-        try:
-            reader = PyPDF2.PdfReader(uploaded_pdf)
-            for page in reader.pages:
-                pdf_text += page.extract_text()
-            st.success("PDF Analyzed Successfully! ✅")
-        except:
-            st.error("Error reading PDF ❌")
+    with st.expander("🛠️ Core Tools", expanded=True):
+        enable_search = st.toggle("🌍 Web Search", help="Connects Kaputa to the internet")
+        
+        uploaded_pdf = st.file_uploader("📂 Upload PDF", type="pdf")
+        pdf_text = ""
+        if uploaded_pdf:
+            try:
+                reader = PyPDF2.PdfReader(uploaded_pdf)
+                for page in reader.pages:
+                    pdf_text += page.extract_text()
+                st.success("Analysis Complete! 🧠", icon="✅")
+            except:
+                st.error("File Error", icon="❌")
 
     st.markdown("---")
     
-    # Download Chat
-    st.markdown("### 💾 Export")
-    st.download_button(
-        label="� Download Chat as PDF",
-        data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
-        file_name="kaputa_chat.pdf",
-        mime="application/pdf",
-        use_container_width=True
-    )
+    with st.expander("💾 Export Options"):
+        st.download_button(
+            label="📄 Save Conversation",
+            data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
+            file_name="kaputa_chat.pdf",
+            mime="application/pdf",
+            use_container_width=True
+        )
 
-# 7. Model Setup
+# 7. Model
 try:
     model = genai.GenerativeModel('gemini-2.5-flash')
 except:
-    st.error("System Error: Model not found.")
+    st.error("System Error 500: Model Unreachable")
 
-# 8. Chat History Initialization
+# 8. Chat Logic
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මම අලුත් පෙනුමකින් ආවා! 😎 මොනවද කරන්නේ?"})
+    st.session_state.messages.append({"role": "model", "content": "👋 හායි! මම Kaputa. ඔයාගේ ඕනෑම වැඩකට මම ලෑස්තියි. අහන්න..."})
 
-# 9. Display Chat History (With Custom Avatars) 🧑💻🐦
+# Display Messages
 for message in st.session_state.messages:
     role = message["role"]
-    
-    # Custom Avatars තෝරා ගැනීම
     if role == "model":
-        avatar_icon = "🐦" # Kaputa Icon
-        role_name = "assistant"
+        with st.chat_message("assistant", avatar="🐦"):
+            st.markdown(message["content"])
     else:
-        avatar_icon = "🧑💻" # User Icon
-        role_name = "user"
+        with st.chat_message("user", avatar="👤"):
+            st.markdown(message["content"])
 
-    with st.chat_message(role_name, avatar=avatar_icon):
-        st.markdown(message["content"])
-
-# 10. Main Input Logic
-prompt = st.chat_input("Ask Kaputa anything...")
+# 9. Input & Processing
+prompt = st.chat_input("Message Kaputa AI...")
 
 if prompt:
-    # User Message
-    with st.chat_message("user", avatar="🧑💻"):
+    # User
+    with st.chat_message("user", avatar="�"):
         st.markdown(prompt)
     st.session_state.messages.append({"role": "user", "content": prompt})
 
-    # AI Response
+    # AI
     with st.chat_message("assistant", avatar="🐦"):
-        with st.spinner("Thinking..."):
+        message_placeholder = st.empty()
+        with st.spinner("Analyzing..."):
             response_text = ""
             try:
-                # A. Web Search Logic
+                # Logic
                 if enable_search:
                     search_results = search_web(prompt)
                     if search_results:
-                        final_prompt = f"Web Search Results:\n{search_results}\n\nUser Query: {prompt}\n\nAnswer based on results."
+                        final_prompt = f"Web Results:\n{search_results}\n\nUser: {prompt}\n\nAnswer:"
                         response = model.generate_content(final_prompt)
                     else:
                         response = model.generate_content(prompt)
                     response_text = response.text
 
-                # B. PDF Logic
                 elif uploaded_pdf and pdf_text:
-                    response = model.generate_content(f"Context from PDF:\n{pdf_text}\n\nUser Question: {prompt}")
+                    response = model.generate_content(f"PDF Context:\n{pdf_text}\n\nUser: {prompt}")
                     response_text = response.text
                 
-                # C. Normal Chat
                 else:
                     response = model.generate_content(prompt)
+                    # Simple Typing Effect (Optional, Streamlit renders markdown chunks well)
                     response_text = response.text
 
-                st.markdown(response_text)
+                message_placeholder.markdown(response_text)
 
-                # Kaputa Speaking (Output Voice Only)
+                # TTS
                 try:
                     tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
@@ -210,3 +230,6 @@ if prompt:
 
             except Exception as e:
                 st.error(f"Error: {e}")
+
+# Footer
+st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️</div>', unsafe_allow_html=True)
