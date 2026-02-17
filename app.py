@@ -50,12 +50,18 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
-# 4. Sidebar Tools
+# 4. Sidebar (Updated with New Chat Button)
 with st.sidebar:
+    # ➕ NEW CHAT BUTTON (උඩින්ම දානවා)
+    if st.button("➕ New Chat", use_container_width=True, type="primary"):
+        st.session_state.messages = []
+        st.rerun()
+    
+    st.markdown("---")
+    
     st.header("🛠️ Toolkit")
     enable_search = st.toggle("🌍 Web Search")
     
-    st.markdown("---")
     st.subheader("📚 Study Buddy")
     uploaded_pdf = st.file_uploader("Upload PDF", type="pdf")
     pdf_text = ""
@@ -75,9 +81,6 @@ with st.sidebar:
         file_name="kaputa_chat.pdf",
         mime="application/pdf"
     )
-    if st.button("🗑️ Clear Chat"):
-        st.session_state.messages = []
-        st.rerun()
 
 # 5. Model Setup
 try:
@@ -85,32 +88,29 @@ try:
 except:
     st.error("Model Error")
 
-# 6. Chat History
+# 6. Chat History Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. කැමති දෙයක් අහන්න."})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. අලුත් දෙයක් පටන් ගමුද?"})
 
+# Display Chat History
 for message in st.session_state.messages:
     role = "assistant" if message["role"] == "model" else "user"
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# --- VOICE INPUT SECTION (Compact Style) ---
-# අපි මේක දාන්නේ Chat History එකට පස්සේ සහ Chat Input එකට කලින්.
-# එතකොට මේක හැමවෙලේම යටම තියෙනවා (Messages වලට යටින්).
-
-st.write("---") # පොඩි ඉරක් ගහනවා වෙන් කරලා පෙන්නන්න
-c1, c2 = st.columns([1, 5]) # Columns පාවිච්චි කරලා Button එක වම් පැත්තට ගන්නවා
+# --- VOICE INPUT SECTION ---
+st.write("---") 
+c1, c2 = st.columns([1, 5])
 with c1:
-    # Voice Button එක
     audio = mic_recorder(
-        start_prompt="🎙️ Katha Karanna",
-        stop_prompt="🛑 Nwaththanna",
+        start_prompt="🎙️ Record",
+        stop_prompt="🛑 Stop",
         just_once=False,
         key='recorder'
     )
 with c2:
-    st.caption("🎙️ Voice Recorder: 'Katha Karanna' ඔබා කතා කරන්න.")
+    st.caption("Click Record to speak.")
 
 # Audio Processing
 audio_prompt = None
@@ -128,7 +128,7 @@ if prompt or audio_prompt:
     st.session_state.messages.append({"role": "user", "content": user_content})
 
     with st.chat_message("assistant"):
-        with st.spinner("Processing..."):
+        with st.spinner("Thinking..."):
             response_text = ""
             try:
                 # A. Voice Logic
@@ -151,17 +151,19 @@ if prompt or audio_prompt:
                         response = model.generate_content(prompt)
                     response_text = response.text
 
-                # C. PDF/Normal Logic
+                # C. PDF Logic
                 elif uploaded_pdf and pdf_text and prompt:
                     response = model.generate_content(f"PDF Context:\n{pdf_text}\n\nQuery: {prompt}")
                     response_text = response.text
+                
+                # D. Normal Chat
                 else:
                     response = model.generate_content(prompt)
                     response_text = response.text
 
                 st.markdown(response_text)
 
-                # D. Voice Output
+                # Voice Output
                 try:
                     tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
