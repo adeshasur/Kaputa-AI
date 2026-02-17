@@ -111,7 +111,7 @@ st.markdown("""
         }
         .stTabs [aria-selected="true"] {
             color: #6366f1 !important;
-            border-bottom: 2px solid #6366f1 !important;
+            border-top: 1px solid #1f2937 !important;
         }
 
         /* Footer */
@@ -119,17 +119,16 @@ st.markdown("""
             position: fixed;
             bottom: 0;
             left: 0;
-            width: 100%;
+            width: 100vw;
             background-color: #0E1117;
             color: #6b7280;
-            padding: 15px;
+            padding: 10px;
             font-size: 0.8rem;
             text-align: center;
-            z-index: 999;
+            z-index: 10000;
             display: flex;
-            justify-content: center;
+            justify-content: center !important;
             align-items: center;
-            border-top: 1px solid #1f2937;
             border-top: 1px solid #1f2937;
         }
 
