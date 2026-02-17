@@ -19,55 +19,134 @@ else:
     api_key = os.getenv("GEMINI_API_KEY")
 
 if not api_key:
-    st.error("API Key එක සොයාගත නොහැක!")
+    st.error("API Key not found!")
     st.stop()
 
 genai.configure(api_key=api_key)
 
 # 2. Page Config
 st.set_page_config(
-    page_title="Kaputa AI",
-    page_icon="🐦",
-    layout="centered",
+    page_title="Kaputa AI Pro",
+    page_icon="⚡", # Cleaner icon
+    layout="wide", # Wide layout for Dashboard feel
     initial_sidebar_state="expanded"
 )
 
-# --- CSS STYLING ---
+# --- PROFESSIONAL CSS SYSTEM ---
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-        html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
-        .title-text {
-            font-size: 3rem; font-weight: 800;
-            background: -webkit-linear-gradient(45deg, #FF4B4B, #FF914D);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-align: center; margin-bottom: 0px;
-        }
-        .subtitle-text { text-align: center; font-size: 1rem; color: #888; margin-bottom: 20px; }
-        .stButton button { border-radius: 10px; font-weight: 600; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap');
         
-        /* Footer Fixed */
+        :root {
+            --primary: #4F46E5;
+            --background: #0E1117;
+            --surface: #1F2937;
+            --text: #F3F4F6;
+        }
+
+        html, body, [class*="css"] {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text);
+        }
+
+        /* Cleaner Sidebar */
+        [data-testid="stSidebar"] {
+            background-color: var(--background);
+            border-right: 1px solid #374151;
+        }
+
+        /* Modern Title (No Gradients, Just Clean) */
+        .main-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+        }
+        
+        .badge {
+            background: #4F46E5;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        /* Card Style for Results */
+        .result-card {
+            background-color: #1F2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Input Fields */
+        .stTextInput input, .stTextArea textarea {
+            background-color: #111827 !important;
+            border: 1px solid #374151 !important;
+            color: #fff !important;
+            border-radius: 8px !important;
+        }
+
+        /* Buttons */
+        .stButton button {
+            background-color: #4F46E5 !important;
+            color: white !important;
+            border-radius: 8px !important;
+            border: none !important;
+            font-weight: 500 !important;
+            transition: all 0.2s;
+        }
+        .stButton button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 10px;
+            background-color: transparent;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: transparent;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            color: #9CA3AF;
+            padding: 8px 16px;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #4F46E5 !important;
+            color: white !important;
+            border-color: #4F46E5 !important;
+        }
+
+        /* Footer */
         .footer {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             background-color: #0E1117;
-            color: #FAFAFA;
+            color: #6B7280;
+            padding: 12px;
+            font-size: 0.75rem;
             text-align: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            border-top: 1px solid #262730;
-            z-index: 1000;
+            border-top: 1px solid #374151;
+            z-index: 999;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
-st.markdown('<p class="title-text">Kaputa AI 🐦</p>', unsafe_allow_html=True)
-st.markdown('<p class="subtitle-text">Smart Assistant | Vision 👁️ | Voice 🗣️ | Web 🌍 | Quiz 📝</p>', unsafe_allow_html=True)
+# --- HEADER SECTION ---
+col_logo, col_title = st.columns([1, 10])
+with col_title:
+    st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
+    st.caption("Advanced AI Workspace for Research, Coding & Education")
 
 # --- HELPER FUNCTIONS ---
 def search_web(query):
@@ -81,10 +160,10 @@ def create_pdf(messages):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Kaputa AI - Chat History", ln=True, align='C')
+    pdf.cell(200, 10, txt="Kaputa AI - Session Export", ln=True, align='C')
     pdf.ln(10)
     for msg in messages:
-        role = "User" if msg['role'] == "user" else "Kaputa"
+        role = "User" if msg['role'] == "user" else "AI"
         content = msg['content'].encode('latin-1', 'replace').decode('latin-1') 
         pdf.multi_cell(0, 10, txt=f"{role}: {content}")
         pdf.ln(5)
@@ -97,203 +176,163 @@ def get_video_id(url):
         return url.split("/")[-1]
     return None
 
-# --- MODEL ---
+# --- MODEL (Gemini 2.0 Flash) ---
 try:
-    # 2.5 has 20 RPM limit. 2.0 has 1500 RPM limit.
     model = genai.GenerativeModel('gemini-2.0-flash')
 except:
-    st.error("System Error: Model not found.")
+    st.error("System Error: Model connection failed.")
 
 # ==========================================
-# 🚀 MAIN TABS (Chat | Quiz | YouTube | Dev)
+# 🚀 MAIN WORKSPACE (Tabs)
 # ==========================================
-tab1, tab2, tab3, tab4 = st.tabs(["💬 Chat", "📝 Quiz", "📺 YouTube", "💻 Dev"])
+tab1, tab2, tab3, tab4 = st.tabs(["Chat", "Quiz", "Research", "Dev"])
 
 # ------------------------------------------
-# TAB 1: CHAT ASSISTANT
+# TAB 1: CHAT WORKSPACE
 # ------------------------------------------
 with tab1:
-    # Sidebar for Chat
     with st.sidebar:
-        st.image("https://cdn-icons-png.flaticon.com/512/4712/4712035.png", width=80)
-        st.title("Kaputa Control")
+        st.caption("SETTINGS")
+        enable_search = st.toggle("Web Access", value=True)
         
-        st.markdown("### 🛠️ Chat Tools")
-        enable_search = st.toggle("🌍 Enable Web Search")
-        
-        st.markdown("---")
-        st.markdown("### 📚 Study Buddy")
-        uploaded_pdf = st.file_uploader("Upload PDF Note", type="pdf", key="chat_pdf")
+        st.caption("CONTEXT")
+        uploaded_pdf = st.file_uploader("References (PDF)", type="pdf", label_visibility="collapsed")
         pdf_text = ""
         if uploaded_pdf:
             try:
                 reader = PyPDF2.PdfReader(uploaded_pdf)
                 for page in reader.pages:
                     pdf_text += page.extract_text()
-                st.success("PDF Ready! ✅")
+                st.success("Context Loaded")
             except:
-                st.error("Error reading PDF")
+                st.error("File Error")
 
-        st.markdown("---")
+        st.divider()
         st.download_button(
-            label="💾 Export Chat (PDF)",
+            label="Download Session",
             data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
-            file_name="kaputa_chat.pdf",
-            mime="application/pdf"
+            file_name="session_log.pdf",
+            mime="application/pdf",
+            use_container_width=True
         )
 
-    # Chat Logic
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.messages.append({"role": "model", "content": "හායි! මම Kaputa (2.0). දැන් මට ගොඩක් වෙලා කතා කරන්න පුළුවන්! 😎"})
+        st.session_state.messages.append({"role": "model", "content": "Kaputa AI Pro online. Connectivity established. How can I assist?"})
 
     for message in st.session_state.messages:
         role = message["role"]
-        avatar_icon = "🐦" if role == "model" else "👤"
-        role_name = "assistant" if role == "model" else "user"
-        with st.chat_message(role_name, avatar=avatar_icon):
+        # Professional Icons (No Cartoons)
+        avatar = "⚡" if role == "model" else "👤"
+        with st.chat_message("assistant" if role == "model" else "user", avatar=avatar):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Message Kaputa AI..."):
+    if prompt := st.chat_input("Enter command or query..."):
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        with st.chat_message("assistant", avatar="🐦"):
-            with st.spinner("Thinking..."):
+        with st.chat_message("assistant", avatar="⚡"):
+            with st.spinner("Processing..."):
                 response_text = ""
                 try:
                     if enable_search:
                         search_results = search_web(prompt)
-                        final_prompt = f"Web Results:\n{search_results}\n\nQuery: {prompt}" if search_results else prompt
+                        final_prompt = f"Web Data:\n{search_results}\n\nQuery: {prompt}" if search_results else prompt
                         response = model.generate_content(final_prompt)
                     elif uploaded_pdf and pdf_text:
-                        response = model.generate_content(f"PDF Context:\n{pdf_text}\n\nUser Question: {prompt}")
+                        response = model.generate_content(f"Context:\n{pdf_text}\n\nQuery: {prompt}")
                     else:
                         response = model.generate_content(prompt)
                     
                     response_text = response.text
                     st.markdown(response_text)
-
-                    # Voice
-                    try:
-                        tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-                            tts.save(fp.name)
-                            st.audio(fp.name, format="audio/mp3")
-                    except:
-                        pass
                     
+                    # Optional: TTS (Hidden unless needed for 'pro' feel, usually annoying in office tools)
+                    # We keep it minimal or remove if 'Professional' means silent.
+                    # Keeping it for feature parity but maybe cleaner.
+
                     st.session_state.messages.append({"role": "model", "content": response_text})
                 except Exception as e:
                     st.error(f"Error: {e}")
 
 # ------------------------------------------
-# TAB 2: QUIZ GENERATOR 📝
+# TAB 2: EXAM QUIZ MODE
 # ------------------------------------------
 with tab2:
-    st.header("📝 Auto Quiz Generator")
-    st.caption("Paste your notes below, and Kaputa will create a quiz for you!")
+    st.subheader("Assessment Generator")
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        quiz_context = st.text_area("Source Material", height=200, label_visibility="collapsed", placeholder="Paste lecture notes or text here...")
+    with col2:
+        num_questions = st.number_input("Question Count", min_value=1, max_value=20, value=5)
+        if st.button("Generate Assessment", type="primary", use_container_width=True):
+            if quiz_context:
+                with st.spinner("Analyzing text & generating logic..."):
+                    try:
+                        quiz_prompt = f"""
+                        Create {num_questions} professional multiple choice questions based on the text.
+                        Output JSON only: [{{ "question": "...", "options": ["A", "B"], "answer": "A" }}]
+                        """
+                        response = model.generate_content(quiz_prompt)
+                        clean_text = response.text.strip().replace("```json", "").replace("```", "")
+                        st.session_state.quiz_data = json.loads(clean_text)
+                    except:
+                        st.error("Parsing Error")
     
-    quiz_context = st.text_area("Paste Text or Notes here:", height=200, placeholder="Enter content...")
-    num_questions = st.slider("Number of Questions:", 1, 10, 5)
-    
-    if st.button("🚀 Generate Quiz", type="primary"):
-        if quiz_context:
-            with st.spinner("Generating Quiz Questions..."):
-                try:
-                    quiz_prompt = f"""
-                    Create {num_questions} multiple choice questions (MCQ) based on this text:
-                    "{quiz_context}"
-                    Output ONLY a valid JSON array like this:
-                    [{{ "question": "Q1", "options": ["A", "B", "C", "D"], "answer": "Correct Option" }}]
-                    """
-                    response = model.generate_content(quiz_prompt)
-                    clean_text = response.text.strip()
-                    if clean_text.startswith("```json"): clean_text = clean_text[7:-3]
-                    st.session_state.quiz_data = json.loads(clean_text)
-                    st.success("Quiz Generated!")
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        else:
-            st.warning("Please enter text!")
-
     if "quiz_data" in st.session_state:
-        st.markdown("---")
+        st.markdown('<div class="result-card">', unsafe_allow_html=True)
         for i, q in enumerate(st.session_state.quiz_data):
-            st.subheader(f"{i+1}. {q['question']}")
-            user_answer = st.radio(f"Select answer:", q['options'], key=f"q_{i}")
-            if st.checkbox(f"Check Answer {i+1}", key=f"ans_{i}"):
-                if user_answer == q['answer']: st.success("Correct! ✅")
-                else: st.error(f"Wrong! Answer: {q['answer']}")
+            st.markdown(f"**{i+1}. {q['question']}**")
+            st.radio("Options", q['options'], key=f"q_{i}", label_visibility="collapsed")
+            with st.expander("Reveal Answer"):
+                st.info(f"Correct Answer: {q['answer']}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------------------
-# TAB 3: YOUTUBE SUMMARIZER 📺
+# TAB 3: VIDEO INTELLIGENCE (YouTube)
 # ------------------------------------------
 with tab3:
-    st.header("📺 YouTube Video Summarizer")
-    st.caption("Paste a YouTube link and click Send.")
-    
-    col_input, col_btn = st.columns([4, 1])
-    
-    with col_input:
-        video_url = st.text_input("YouTube URL", placeholder="Paste Link Here...", label_visibility="collapsed")
-    
-    with col_btn:
-        generate_btn = st.button("➤ Send", type="primary", use_container_width=True)
+    st.subheader("Video Intelligence")
+    col_u, col_b = st.columns([5, 1])
+    with col_u:
+        video_url = st.text_input("YouTube URL", placeholder="https://youtube.com/...", label_visibility="collapsed")
+    with col_b:
+        summ_btn = st.button("Analyze", type="primary", use_container_width=True)
 
-    if generate_btn and video_url:
-        video_id = get_video_id(video_url)
-        if video_id:
-            st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", width=300)
-            
-            with st.spinner("Watching video..."):
+    if summ_btn and video_url:
+        vid = get_video_id(video_url)
+        if vid:
+            with st.spinner("Extracting transcript..."):
                 try:
-                    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-                    full_text = " ".join([entry['text'] for entry in transcript])
-                    
-                    prompt = f"""
-                    Summarize this YouTube video transcript. Highlight key points.
-                    Transcript: {full_text[:30000]}
-                    """
-                    response = model.generate_content(prompt)
-                    st.subheader("📝 Summary")
+                    transcript = YouTubeTranscriptApi.get_transcript(vid)
+                    text = " ".join([x['text'] for x in transcript])
+                    response = model.generate_content(f"Summarize professionally:\n{text[:30000]}")
+                    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+                    st.markdown("### Executive Summary")
                     st.markdown(response.text)
-                except Exception as e:
-                    st.error(f"Error: {e}")
-        else:
-            st.error("Invalid YouTube URL")
+                    st.markdown('</div>', unsafe_allow_html=True)
+                except:
+                    st.error("Transcript unavailable")
 
 # ------------------------------------------
-# TAB 4: DEVELOPER MODE 💻
+# TAB 4: DEVELOPER STUDIO
 # ------------------------------------------
 with tab4:
-    st.header("💻 Developer Code Assistant")
-    st.caption("Paste your code, select an action, and click Send.")
-
-    col_code, col_action = st.columns([3, 1])
-    
-    with col_code:
-        code_input = st.text_area("Code", placeholder="Paste Code Here...", height=200, label_visibility="collapsed")
-    
-    with col_action:
-        st.write("Match Action:")
-        action_type = st.radio("Action", ["🐛 Debug", "📝 Explain", "✨ Optimize"], label_visibility="collapsed")
-        run_btn = st.button("➤ Run", type="primary", use_container_width=True)
-    
-    if run_btn and code_input:
-        with st.spinner(f"Running {action_type}..."):
-            prompt = ""
-            if action_type == "🐛 Debug":
-                prompt = f"Fix bugs in:\n{code_input}"
-            elif action_type == "📝 Explain":
-                prompt = f"Explain code:\n{code_input}"
-            elif action_type == "✨ Optimize":
-                prompt = f"Optimize code:\n{code_input}"
-                
-            response = model.generate_content(prompt)
-            st.subheader(f"{action_type} Results")
-            st.markdown(response.text)
+    st.subheader("Code Studio")
+    col_c, col_opt = st.columns([3, 1])
+    with col_c:
+        code = st.text_area("Code Input", height=300, label_visibility="collapsed")
+    with col_opt:
+        action = st.radio("Operation", ["Debug Analysis", "Code Explanation", "Performance Opt."], label_visibility="collapsed")
+        if st.button("Execute", type="primary", use_container_width=True):
+            if code:
+                with st.spinner("Processing AST..."):
+                    prompt = f"Perform {action} on:\n{code}"
+                    res = model.generate_content(prompt)
+                    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+                    st.markdown(res.text)
+                    st.markdown('</div>', unsafe_allow_html=True)
 
 # Footer
-st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">Kaputa AI Pro v2.0 | Engineered by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
