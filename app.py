@@ -232,30 +232,35 @@ with tab2:
 # ------------------------------------------
 with tab3:
     st.header("📺 YouTube Video Summarizer")
-    st.caption("Paste a YouTube link to get a quick summary.")
-
-    video_url = st.text_input("YouTube Video URL")
+    st.caption("Paste a YouTube link and click Send.")
     
-    if video_url:
+    col_input, col_btn = st.columns([4, 1])
+    
+    with col_input:
+        video_url = st.text_input("YouTube URL", placeholder="Paste Link Here...", label_visibility="collapsed")
+    
+    with col_btn:
+        generate_btn = st.button("➤ Send", type="primary", use_container_width=True)
+
+    if generate_btn and video_url:
         video_id = get_video_id(video_url)
         if video_id:
             st.image(f"http://img.youtube.com/vi/{video_id}/0.jpg", width=300)
             
-            if st.button("🎬 Summarize Video", type="primary"):
-                with st.spinner("Watching video..."):
-                    try:
-                        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-                        full_text = " ".join([entry['text'] for entry in transcript])
-                        
-                        prompt = f"""
-                        Summarize this YouTube video transcript. Highlight key points.
-                        Transcript: {full_text[:30000]}
-                        """
-                        response = model.generate_content(prompt)
-                        st.subheader("📝 Summary")
-                        st.markdown(response.text)
-                    except Exception as e:
-                        st.error(f"Error: {e}")
+            with st.spinner("Watching video..."):
+                try:
+                    transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                    full_text = " ".join([entry['text'] for entry in transcript])
+                    
+                    prompt = f"""
+                    Summarize this YouTube video transcript. Highlight key points.
+                    Transcript: {full_text[:30000]}
+                    """
+                    response = model.generate_content(prompt)
+                    st.subheader("📝 Summary")
+                    st.markdown(response.text)
+                except Exception as e:
+                    st.error(f"Error: {e}")
         else:
             st.error("Invalid YouTube URL")
 
@@ -264,31 +269,31 @@ with tab3:
 # ------------------------------------------
 with tab4:
     st.header("💻 Developer Code Assistant")
-    st.caption("Debug, Explain, or Optimize your code.")
+    st.caption("Paste your code, select an action, and click Send.")
 
-    code_input = st.text_area("Paste Code Here", height=200)
+    col_code, col_action = st.columns([3, 1])
     
-    col1, col2, col3 = st.columns(3)
+    with col_code:
+        code_input = st.text_area("Code", placeholder="Paste Code Here...", height=200, label_visibility="collapsed")
     
-    if code_input:
-        with col1:
-            if st.button("🐛 Debug", use_container_width=True):
-                with st.spinner("Debugging..."):
-                    response = model.generate_content(f"Fix bugs in:\n{code_input}")
-                    st.subheader("🐛 Report")
-                    st.markdown(response.text)
-        with col2:
-            if st.button("📝 Explain", use_container_width=True):
-                with st.spinner("Explaining..."):
-                    response = model.generate_content(f"Explain code:\n{code_input}")
-                    st.subheader("📝 Explanation")
-                    st.markdown(response.text)
-        with col3:
-            if st.button("✨ Optimize", use_container_width=True):
-                with st.spinner("Optimizing..."):
-                    response = model.generate_content(f"Optimize code:\n{code_input}")
-                    st.subheader("✨ Suggestions")
-                    st.markdown(response.text)
+    with col_action:
+        st.write("Match Action:")
+        action_type = st.radio("Action", ["🐛 Debug", "📝 Explain", "✨ Optimize"], label_visibility="collapsed")
+        run_btn = st.button("➤ Run", type="primary", use_container_width=True)
+    
+    if run_btn and code_input:
+        with st.spinner(f"Running {action_type}..."):
+            prompt = ""
+            if action_type == "🐛 Debug":
+                prompt = f"Fix bugs in:\n{code_input}"
+            elif action_type == "📝 Explain":
+                prompt = f"Explain code:\n{code_input}"
+            elif action_type == "✨ Optimize":
+                prompt = f"Optimize code:\n{code_input}"
+                
+            response = model.generate_content(prompt)
+            st.subheader(f"{action_type} Results")
+            st.markdown(response.text)
 
 # Footer
 st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
