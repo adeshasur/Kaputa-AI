@@ -121,11 +121,15 @@ st.markdown("""
             left: 0;
             width: 100%;
             background-color: #0E1117;
-            color: #4b5563;
+            color: #6b7280;
             padding: 15px;
             font-size: 0.8rem;
             text-align: center;
             z-index: 999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-top: 1px solid #1f2937;
         }
     </style>
 """, unsafe_allow_html=True)
