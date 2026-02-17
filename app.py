@@ -33,6 +33,8 @@ st.set_page_config(
 )
 
 # --- PROFESSIONAL CSS SYSTEM ---
+st.markdown("""
+    <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
         :root {
