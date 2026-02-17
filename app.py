@@ -22,7 +22,7 @@ if not api_key:
     st.error("API Key not found!")
     st.stop()
 
-genai.configure(api_key=api_key)
+genai.configure(api_key=api_key, transport='rest')
 
 # Initialize theme state (default to Light mode for Apple aesthetic)
 if "theme" not in st.session_state:
@@ -404,8 +404,8 @@ def get_video_id(url):
 
 # --- MODEL (Gemini 2.0 Flash) ---
 try:
-    # Using full model path for better API compatibility
-    model = genai.GenerativeModel('models/gemini-1.5-flash')
+    # Using explicit model_name parameter for API stability
+    model = genai.GenerativeModel(model_name='gemini-1.5-flash')
 except:
     st.error("System Error: Model connection failed.")
 
