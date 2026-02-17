@@ -2,12 +2,11 @@ import streamlit as st
 import os
 import google.generativeai as genai
 from dotenv import load_dotenv
-from PIL import Image
-import PyPDF2
 from gtts import gTTS
 import tempfile
 from duckduckgo_search import DDGS
 from fpdf import FPDF
+import PyPDF2
 
 # 1. Environment Setup
 load_dotenv()
@@ -49,18 +48,14 @@ def create_pdf(messages):
         pdf.ln(5)
     return pdf.output(dest='S').encode('latin-1')
 
-# 4. Sidebar Tools
+# 4. Sidebar Tools (Only Tools, No New Chat Button)
 with st.sidebar:
-    # ➕ New Chat Button (සරලව Chat එක Clear කරනවා)
-    if st.button("➕ New Chat", use_container_width=True, type="primary"):
-        st.session_state.messages = []
-        st.rerun()
-    
-    st.markdown("---")
     st.header("🛠️ Tools")
     
     # Web Search Toggle
     enable_search = st.toggle("🌍 Enable Web Search")
+    
+    st.markdown("---")
     
     # PDF Upload
     st.subheader("📚 Study Buddy")
@@ -94,7 +89,7 @@ except:
 # 6. Chat History Initialization
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. මම දැන් හරිම වේගවත්. මොනවද දැනගන්න ඕන?"})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. කැමති දෙයක් අහන්න."})
 
 # Display Chat History
 for message in st.session_state.messages:
@@ -113,7 +108,7 @@ if prompt:
 
     # AI Response
     with st.chat_message("assistant"):
-        with st.spinner("Kaputa is thinking..."):
+        with st.spinner("Thinking..."):
             response_text = ""
             try:
                 # A. Web Search Logic
