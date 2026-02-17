@@ -99,7 +99,8 @@ def get_video_id(url):
 
 # --- MODEL ---
 try:
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    # 2.5 has 20 RPM limit. 2.0 has 1500 RPM limit.
+    model = genai.GenerativeModel('gemini-2.0-flash')
 except:
     st.error("System Error: Model not found.")
 
@@ -144,7 +145,7 @@ with tab1:
     # Chat Logic
     if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.session_state.messages.append({"role": "model", "content": "හායි! මම Kaputa. ඔයාගේ ඕනම වැඩකට මම ලෑස්තියි. අහන්න..."})
+        st.session_state.messages.append({"role": "model", "content": "හායි! මම Kaputa (2.0). දැන් මට ගොඩක් වෙලා කතා කරන්න පුළුවන්! 😎"})
 
     for message in st.session_state.messages:
         role = message["role"]
