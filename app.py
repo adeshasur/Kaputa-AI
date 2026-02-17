@@ -214,4 +214,4 @@ if prompt:
                 st.error(f"Error: {e}")
 
 # Footer
-st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️</div>', unsafe_allow_html=True)
+st.markdown('<div class="footer">🚀 Powered by Gemini 2.5 | 🧠 Built with ❤️ by Adheesha Sooriyaarachchi</div>', unsafe_allow_html=True)
