@@ -43,7 +43,6 @@ st.markdown("""
             text-align: center; margin-bottom: 0px;
         }
         .subtitle-text { text-align: center; font-size: 1rem; color: #888; margin-bottom: 20px; }
-        [data-testid="stSidebar"] { background-color: #f0f2f6; }
         .stButton button { border-radius: 10px; font-weight: 600; }
     </style>
 """, unsafe_allow_html=True)
