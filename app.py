@@ -33,103 +33,129 @@ st.set_page_config(
 )
 
 # --- PROFESSIONAL CSS SYSTEM ---
-st.markdown("""
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         
         :root {
-            --primary: #6366f1;
-            --background: #0E1117;
-            --text: #FAFAFA;
+            --apple-blue: #007AFF;
+            --apple-gray: #1C1C1E;
+            --apple-text: #F2F2F7;
         }
 
         html, body, [class*="css"] {
-            font-family: 'Outfit', sans-serif;
-            color: var(--text);
-            line-height: 1.6; /* More breathing room */
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+            color: var(--apple-text);
+            background-color: #000000;
         }
 
-        /* Clean Sidebar */
+        /* Sidebar: Translucent iOS feel */
         [data-testid="stSidebar"] {
-            background-color: #111827;
-            border-right: 1px solid #1f2937;
+            background-color: #1C1C1E;
+            border-right: 1px solid #2C2C2E;
         }
 
-        /* Minimal Title */
+        /* iOS Large Title */
         .main-title {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 10px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #888888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0px;
             text-align: center;
+            letter-spacing: -1.5px;
         }
         
         .badge {
-            color: #6366f1;
+            color: #007AFF;
             font-size: 1rem;
-            vertical-align: super;
+            vertical-align: top;
             font-weight: 600;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
         }
 
-        /* Clean Cards (No Background, Just spacing) */
+        /* iOS Cards (Rounded 20px) */
         .result-card {
+            background-color: #1C1C1E;
+            border-radius: 22px;
+            padding: 24px;
             margin-top: 20px;
-            padding: 20px;
-            border-left: 2px solid #6366f1; /* Minimal accent */
-            background: transparent;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid #2C2C2E;
         }
 
-        /* Inputs */
+        /* Inputs: Floating Island Style */
         .stTextInput input, .stTextArea textarea {
-            background-color: #1f2937 !important;
-            border: 1px solid #374151 !important;
+            background-color: #2C2C2E !important;
+            border: none !important;
             color: white !important;
-            border-radius: 12px !important;
-            padding: 10px !important;
+            border-radius: 18px !important;
+            padding: 16px !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
         }
-
-        /* Buttons (Subtle) */
+        
+        /* Buttons: Pill Shaped */
         .stButton button {
-            background-color: #4338ca !important;
+            background-color: #007AFF !important;
             color: white !important;
-            border-radius: 8px !important;
-            padding: 0.5rem 1rem !important;
-            font-weight: 500 !important;
+            border-radius: 9999px !important; /* Pill shape */
+            padding: 10px 24px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            border: none !important;
+            transition: transform 0.1s ease;
+        }
+        .stButton button:active {
+            transform: scale(0.96);
         }
 
-        /* Tabs */
+        /* Tabs: Segmented Control Style */
         .stTabs [data-baseweb="tab-list"] {
-            gap: 20px;
+            gap: 8px;
+            background-color: #1C1C1E;
+            padding: 5px;
+            border-radius: 16px;
+            display: inline-flex;
             justify-content: center;
+            margin: 0 auto;
+            width: fit-content;
         }
         .stTabs [data-baseweb="tab"] {
             background-color: transparent;
             border: none;
-            color: #9CA3AF;
-            font-size: 1rem;
-            padding-bottom: 10px;
+            color: #8E8E93;
+            font-size: 0.9rem;
+            padding: 8px 20px;
+            border-radius: 12px;
         }
         .stTabs [aria-selected="true"] {
-            color: #6366f1 !important;
-            border-top: 1px solid #1f2937 !important;
+            background-color: #3A3A3C !important;
+            color: #FFFFFF !important;
+            font-weight: 600;
         }
 
-        /* Footer */
+        /* Footer: Glassmorphism */
         .footer {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100vw;
-            background-color: #0E1117;
-            color: #6b7280;
-            padding: 10px;
-            font-size: 0.8rem;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            background: rgba(28, 28, 30, 0.85); /* Blur bg */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: #8E8E93;
+            padding: 12px 24px;
+            border-radius: 999px;
+            font-size: 0.75rem;
             text-align: center;
             z-index: 10000;
             display: flex;
-            justify-content: center !important;
+            justify-content: center;
             align-items: center;
-            border-top: 1px solid #1f2937;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         /* Hide Default Streamlit Elements */
