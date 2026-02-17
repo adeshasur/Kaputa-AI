@@ -9,7 +9,6 @@ import tempfile
 from duckduckgo_search import DDGS
 from fpdf import FPDF
 from streamlit_mic_recorder import mic_recorder
-import io
 
 # 1. Environment Setup
 load_dotenv()
@@ -26,47 +25,39 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # 2. Page Config
-st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="wide")
-st.title("Kaputa AI 🐦 (Ultimate Version)")
-st.caption("Gemini 2.5 Flash | Vision 👁️ | Voice 🗣️ | Web Search 🌍 | PDF Export �")
+st.set_page_config(page_title="Kaputa AI", page_icon="🐦", layout="centered")
+st.title("Kaputa AI 🐦")
+st.caption("Gemini 2.5 Flash | Voice & Vision Enabled")
 
-# 3. Helper Function: Web Search
+# 3. Helper Functions
 def search_web(query):
     try:
         results = DDGS().text(query, max_results=3)
         return "\n".join([f"- {r['title']}: {r['body']}" for r in results])
-    except Exception as e:
+    except:
         return None
 
-# 4. Helper Function: Export Chat to PDF
 def create_pdf(messages):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    
     pdf.cell(200, 10, txt="Kaputa AI - Chat History", ln=True, align='C')
     pdf.ln(10)
-
     for msg in messages:
         role = "User" if msg['role'] == "user" else "Kaputa"
-        # Note: FPDF doesn't support Sinhala perfectly, so we sanitize text
         content = msg['content'].encode('latin-1', 'replace').decode('latin-1') 
         pdf.multi_cell(0, 10, txt=f"{role}: {content}")
         pdf.ln(5)
-    
     return pdf.output(dest='S').encode('latin-1')
 
-# 5. Sidebar (Settings & Tools)
+# 4. Sidebar Tools
 with st.sidebar:
-    st.header("⚙️ Settings & Tools")
+    st.header("🛠️ Toolkit")
+    enable_search = st.toggle("🌍 Web Search")
     
-    # Toggle Web Search
-    enable_search = st.toggle("🌍 Enable Web Search (අන්තර්ජාලය)")
-    
-    # PDF Upload
+    st.markdown("---")
     st.subheader("📚 Study Buddy")
-    uploaded_pdf = st.file_uploader("Upload Lecture Note (PDF)", type="pdf")
-    
+    uploaded_pdf = st.file_uploader("Upload PDF", type="pdf")
     pdf_text = ""
     if uploaded_pdf:
         try:
@@ -77,111 +68,100 @@ with st.sidebar:
         except:
             st.error("PDF Error")
 
-    # Export Chat Button
     st.markdown("---")
-    # Check if messages exist before calling create_pdf
-    msgs = st.session_state.messages if "messages" in st.session_state else []
-    if msgs:
-         pdf_data = create_pdf(msgs)
-         st.download_button(
-             label="� Download Chat (PDF)",
-             data=pdf_data,
-             file_name="kaputa_chat.pdf",
-             mime="application/pdf"
-         )
-
-    # Clear Chat
-    if st.button("🗑️ Clear History"):
+    st.download_button(
+        label="💾 Download Chat",
+        data=create_pdf(st.session_state.messages if "messages" in st.session_state else []),
+        file_name="kaputa_chat.pdf",
+        mime="application/pdf"
+    )
+    if st.button("🗑️ Clear Chat"):
         st.session_state.messages = []
         st.rerun()
 
-# 6. Model Setup
+# 5. Model Setup
 try:
     model = genai.GenerativeModel('gemini-2.5-flash')
 except:
     st.error("Model Error")
 
-# 7. Chat History
+# 6. Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. දැන් මට අන්තර්ජාලයෙන් හොයන්නත්, ඔයා කියන දේ අහන්නත් පුළුවන්."})
+    st.session_state.messages.append({"role": "model", "content": "ආයුබෝවන්! මම Kaputa. කැමති දෙයක් අහන්න."})
 
-# Display Messages
 for message in st.session_state.messages:
     role = "assistant" if message["role"] == "model" else "user"
     with st.chat_message(role):
         st.markdown(message["content"])
 
-# 8. VOICE INPUT (Microphone) 🎤
-st.markdown("---")
-col1, col2 = st.columns([1, 4])
-with col1:
-    st.write("🎤 **Voice Input:**")
-    audio = mic_recorder(start_prompt="⏺️ Record", stop_prompt="⏹️ Stop", key='recorder')
+# --- VOICE INPUT SECTION (Compact Style) ---
+# අපි මේක දාන්නේ Chat History එකට පස්සේ සහ Chat Input එකට කලින්.
+# එතකොට මේක හැමවෙලේම යටම තියෙනවා (Messages වලට යටින්).
 
+st.write("---") # පොඩි ඉරක් ගහනවා වෙන් කරලා පෙන්නන්න
+c1, c2 = st.columns([1, 5]) # Columns පාවිච්චි කරලා Button එක වම් පැත්තට ගන්නවා
+with c1:
+    # Voice Button එක
+    audio = mic_recorder(
+        start_prompt="🎙️ Katha Karanna",
+        stop_prompt="🛑 Nwaththanna",
+        just_once=False,
+        key='recorder'
+    )
+with c2:
+    st.caption("🎙️ Voice Recorder: 'Katha Karanna' ඔබා කතා කරන්න.")
+
+# Audio Processing
 audio_prompt = None
 if audio:
-    # Voice Input එක කෙලින්ම Gemini ට යවමු (Audio Understanding)
-    st.audio(audio['bytes'])
     audio_prompt = audio['bytes']
 
-# 9. Main Logic
-prompt = st.chat_input("Type something...")
+# 7. Main Input Logic
+prompt = st.chat_input("Type something here...")
 
 if prompt or audio_prompt:
-    # User Input එක හදාගැනීම
-    user_content = prompt if prompt else "🎤 [Audio Message Sent]"
+    user_content = prompt if prompt else "🎤 [Voice Message]"
     
     with st.chat_message("user"):
         st.markdown(user_content)
     st.session_state.messages.append({"role": "user", "content": user_content})
 
     with st.chat_message("assistant"):
-        with st.spinner("Kaputa is thinking... 🤔"):
+        with st.spinner("Processing..."):
             response_text = ""
-            
             try:
-                # A. Voice Input නම් (Audio Processing)
+                # A. Voice Logic
                 if audio_prompt:
-                    # Audio එක File එකක් විදියට Save කරගන්නවා
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
                         temp_audio.write(audio_prompt)
                         temp_audio_path = temp_audio.name
                     
-                    # Gemini ට Audio File එක යවනවා
                     audio_file = genai.upload_file(temp_audio_path)
-                    
-                    # Wait for file processing if needed, but for small audio usually fast. 
-                    # Ideally we loop check state, but start simple.
-                    
-                    response = model.generate_content(["Please listen to this audio and reply in Sinhala or English:", audio_file])
+                    response = model.generate_content(["Reply to this audio (Sinhala/English):", audio_file])
                     response_text = response.text
-                
-                # B. Web Search On නම් 🌍
+
+                # B. Web Search Logic
                 elif enable_search and prompt:
                     search_results = search_web(prompt)
                     if search_results:
-                        st.info(f"🔎 Searching Web: Found info about '{prompt}'")
-                        final_prompt = f"Context from Web Search:\n{search_results}\n\nUser Question: {prompt}\n\nAnswer based on the context."
+                        final_prompt = f"Web Results:\n{search_results}\n\nQuery: {prompt}"
                         response = model.generate_content(final_prompt)
                     else:
                         response = model.generate_content(prompt)
                     response_text = response.text
 
-                # C. PDF Context 📚
+                # C. PDF/Normal Logic
                 elif uploaded_pdf and pdf_text and prompt:
-                    final_prompt = f"PDF Context:\n{pdf_text}\n\nQuestion: {prompt}"
-                    response = model.generate_content(final_prompt)
+                    response = model.generate_content(f"PDF Context:\n{pdf_text}\n\nQuery: {prompt}")
                     response_text = response.text
-
-                # D. Normal Chat / Image
                 else:
                     response = model.generate_content(prompt)
                     response_text = response.text
 
                 st.markdown(response_text)
 
-                # Voice Output (Text-to-Speech) 🗣️
+                # D. Voice Output
                 try:
                     tts = gTTS(text=response_text, lang='si' if any(c in response_text for c in 'අආඇ') else 'en')
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
