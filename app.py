@@ -31,7 +31,7 @@ with st.sidebar:
     st.header("⚙️ Settings")
     
     # PDF Upload
-    st.subheader("� Study Buddy (PDF)")
+    st.subheader("📚 Study Buddy (PDF)")
     uploaded_pdf = st.file_uploader("Upload PDF Lecture Note", type="pdf")
     
     pdf_text = ""
@@ -49,8 +49,11 @@ with st.sidebar:
         st.session_state.messages = []
         st.rerun()
 
-# 4. Model Setup
-model = genai.GenerativeModel('gemini-1.5-flash')
+# 4. Model Setup (Corrected to 2.5 Flash)
+try:
+    model = genai.GenerativeModel('gemini-2.5-flash')
+except Exception as e:
+    st.error(f"Model Error: {e}")
 
 # 5. Chat History
 if "messages" not in st.session_state:
@@ -111,7 +114,7 @@ if prompt := st.chat_input("අහන්න ඕන දෙයක් කියන�
                         tts.save(fp.name)
                         st.audio(fp.name, format="audio/mp3")
                 except:
-                    pass # Voice වැඩ කළේ නැත්නම් අවුලක් නෑ, Text එක විතරක් පෙන්නන්න.
+                    pass 
 
         # Save to History
         st.session_state.messages.append({"role": "model", "content": response_text})
