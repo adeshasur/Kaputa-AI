@@ -130,7 +130,12 @@ st.markdown("""
             justify-content: center;
             align-items: center;
             border-top: 1px solid #1f2937;
+            border-top: 1px solid #1f2937;
         }
+
+        /* Hide Default Streamlit Elements */
+        footer {visibility: hidden;}
+        #MainMenu {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
