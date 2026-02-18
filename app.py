@@ -232,7 +232,7 @@ with st.sidebar:
                 use_container_width=True
             )
 
-    st.markdown("<div style='margin-top: 50px; text-align: center; font-size: 10px; color: #555;'>Kaputa AI Pro v2.0<br>Engineered by Adheesha Sooriyaarachchi</div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 50px; text-align: center; font-size: 10px; color: #555;'>Kaputa AI Pro v5.2 (UX Updated)<br>Engineered by Adheesha Sooriyaarachchi</div>", unsafe_allow_html=True)
 
 
 # 5. MAIN CONTENT
