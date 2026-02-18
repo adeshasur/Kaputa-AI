@@ -3,5 +3,7 @@ google-generativeai
 python-dotenv
 gTTS
 PyPDF2
-duckduckgo_search
+duckduckgo-search
 fpdf
+youtube-transcript-api
+Pillow

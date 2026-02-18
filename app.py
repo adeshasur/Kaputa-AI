@@ -6,241 +6,283 @@ from gtts import gTTS
 import tempfile
 from duckduckgo_search import DDGS
 import PyPDF2
+from fpdf import FPDF
+from youtube_transcript_api import YouTubeTranscriptApi
 from PIL import Image
 
 # 1. Configuration
 load_dotenv()
 api_key = st.secrets["GEMINI_API_KEY"] if "GEMINI_API_KEY" in st.secrets else os.getenv("GEMINI_API_KEY")
 
-# 404 Error Fix
+# Fix 404
 genai.configure(api_key=api_key, transport='rest')
 
-# 2. Page Styling: iOS 26 Futuristic
-st.set_page_config(page_title="Kaputa AI Pro - iOS 26", page_icon="🐦", layout="wide", initial_sidebar_state="expanded")
+# 2. Page Setup (Clean & Pro - Like Screenshot)
+st.set_page_config(page_title="Kaputa AI Pro", page_icon="🐦", layout="wide", initial_sidebar_state="expanded")
 
-# --- iOS 26 FUTURISTIC CSS ---
+# --- PRO CSS (Updated to match request) ---
 st.markdown("""
 <style>
-    /* Global Reset & Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap'); /* Using SF Pro clone or close match */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     :root {
-        --ios-bg: #000000;
-        --ios-card: #1C1C1E;
-        --ios-card-hover: #2C2C2E;
-        --ios-blue: #0A84FF;
-        --ios-purple: #BF5AF2;
-        --ios-glass: rgba(28, 28, 30, 0.65);
-        --ios-border: rgba(255, 255, 255, 0.1);
-        --ios-text: #F2F2F7;
-        --ios-text-secondary: #8E8E93;
+        --bg-main: #0E1117;
+        --bg-card: #1E1E1E;
+        --accent: #3A86FF;
+        --text: #E0E0E0;
     }
 
+    /* GLOBAL */
     html, body, [class*="css"] {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; /* Fallback to system fonts for max speed */
-        background-color: var(--ios-bg) !important;
-        color: var(--ios-text) !important;
+        font-family: 'Inter', sans-serif;
+        color: var(--text) !important;
+        background-color: var(--bg-main) !important;
     }
 
-    /* Sidebar: Frosted Glass / Mesh Gradient Feel */
+    /* HEADERS */
+    h1, h2, h3 {
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    /* SIDEBAR */
     [data-testid="stSidebar"] {
-        background-color: rgba(0, 0, 0, 0.8) !important;
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-right: 1px solid var(--ios-border);
+        background-color: #0E1117;
+        border-right: 1px solid #333;
     }
     
-    /* Hide Default Header/Footer */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    
-    /* Main Content Area */
-    .stApp {
-        background: radial-gradient(circle at 50% 10%, #1a1a2e 0%, #000000 60%);
+    /* TABS */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #1E1E1E;
+        padding: 6px;
+        border-radius: 12px;
+        display: inline-flex;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: transparent;
+        border: none;
+        color: #888;
+        font-size: 0.9rem;
+        padding: 6px 20px;
+        border-radius: 8px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #333 !important;
+        color: white !important;
+        font-weight: 600;
     }
 
-    /* iOS 26 Input Fields (Floating Pills) */
-    .stTextInput input {
-        background-color: var(--ios-card) !important;
-        border: 1px solid var(--ios-border) !important;
+    /* "PRO" Title Style */
+    .main-title {
+        font-size: 3rem;
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 5px;
+        background: linear-gradient(90deg, #fff, #888);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .badge {
+        font-size: 0.8rem;
+        vertical-align: top;
+        background: #3A86FF;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 5px;
+        -webkit-text-fill-color: white; /* Reset gradient */
+    }
+
+    /* CARDS */
+    .result-card {
+        background-color: var(--bg-card);
+        border: 1px solid #333;
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 15px;
+    }
+
+    /* INPUTS */
+    .stTextInput input, .stTextArea textarea {
+        background-color: #1E1E1E !important;
+        border: 1px solid #333 !important;
         color: white !important;
-        border-radius: 99px !important; /* Full pill shape */
-        padding: 15px 25px !important;
-        font-size: 16px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s ease;
+        border-radius: 12px !important;
     }
     .stTextInput input:focus {
-        border-color: var(--ios-blue) !important;
-        background-color: var(--ios-card-hover) !important;
-        box-shadow: 0 0 0 2px rgba(10, 132, 255, 0.3), 0 8px 30px rgba(10, 132, 255, 0.1);
+        border-color: var(--accent) !important;
     }
 
-    /* Buttons: Neon Glass */
+    /* BUTTONS */
     .stButton button {
-        background: linear-gradient(135deg, var(--ios-blue), #0051D5) !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 18px !important; /* iOS squircle-ish */
-        padding: 10px 24px !important;
+        border-radius: 12px !important;
         font-weight: 500 !important;
-        box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
-        transition: transform 0.1s ease, box-shadow 0.2s ease;
-    }
-    .stButton button:hover {
-        transform: scale(1.02);
-        box-shadow: 0 6px 20px rgba(10, 132, 255, 0.6);
-    }
-    .stButton button:active {
-        transform: scale(0.96);
-    }
-
-    /* Cards / Chat Bubbles */
-    .stChatMessage {
-        background-color: transparent; /* Clean look */
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 20px 0;
-    }
-    [data-testid="stChatMessageContent"] {
-        background-color: transparent !important;
-        color: var(--ios-text) !important;
-        font-size: 17px; /* iOS body size */
-        line-height: 1.5;
     }
     
-    /* Avatar Styling */
-    .stChatMessageAvatar {
-        background-color: var(--ios-card);
-        border: 1px solid var(--ios-border);
-        border-radius: 50%;
-    }
-
-    /* Radios as Segmented Control */
-    .stRadio [role="radiogroup"] {
-        background-color: var(--ios-card);
-        padding: 4px;
-        border-radius: 12px;
-        display: flex;
-        gap: 0;
-    }
-    .stRadio label {
-        flex: 1;
-        text-align: center;
-        background: transparent;
-        border-radius: 8px;
-        padding: 8px 16px;
-        margin: 0;
-        transition: background 0.2s;
-        border: none;
-    }
-    /* Note: Streamlit radio styling is tricky, kept minimal for stability */
-
-    /* Scrollbars (Hidden/Sleek) */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
-# 3. Model Setup
+# 3. Model
 try:
     model = genai.GenerativeModel('models/gemini-1.5-flash')
 except Exception as e:
     st.error(f"System Error: {e}")
 
-# 4. SIDEBAR - iOS 26 Look
+# 4. SIDEBAR LOGIC
 with st.sidebar:
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True) # Spacer
-    
-    # Logo Area with Glow
-    col_l1, col_l2, col_l3 = st.columns([1, 2, 1])
-    with col_l2:
-        try:
-            logo = Image.open("assets/logo.png")
-            st.image(logo, use_container_width=True)
-        except:
-            st.markdown("## 🦅")
-            
-    st.markdown("""
-        <div style='text-align: center; margin-bottom: 30px;'>
-            <h2 style='font-weight: 700; font-size: 24px; margin: 0; background: linear-gradient(90deg, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>Kaputa AI</h2>
-            <p style='color: #666; font-size: 12px; margin-top: 5px; letter-spacing: 1px;'>DESIGNED FOR IOS 26</p>
-        </div>
-    """, unsafe_allow_html=True)
+    # Logo Area
+    try:
+        logo_img = Image.open("assets/logo.png")
+        col_l1, col_l2 = st.columns([1, 3])
+        with col_l1:
+            st.image(logo_img, width=60)
+        with col_l2:
+            st.markdown("<h3 style='margin: 10px 0;'>Kaputa AI</h3>", unsafe_allow_html=True)
+    except:
+        st.markdown("## 🦅 Kaputa AI")
 
-    # Navigation (Mode Selection)
-    st.markdown("<p style='font-size: 12px; color: #666; font-weight: 600; padding-left: 10px;'>WORKSPACE</p>", unsafe_allow_html=True)
-    mode = st.radio("Mode", ["💬  Chat", "✨  Create", "🔎  Research"], label_visibility="collapsed")
-    
     st.markdown("---")
     
-    # Quick Actions
-    st.markdown("<p style='font-size: 12px; color: #666; font-weight: 600; padding-left: 10px;'>ACTIONS</p>", unsafe_allow_html=True)
-    if st.button("New Session", use_container_width=True, type="secondary"):
-        st.session_state.messages = []
-        st.rerun()
-        
-    st.markdown("<div style='margin-top: auto; padding-top: 50px; text-align: center; color: #444; font-size: 10px;'>v5.0 Ultra</div>", unsafe_allow_html=True)
+    st.caption("SETTINGS")
+    enable_search = st.toggle("Web Access", value=True)
+    
+    st.caption("CONTEXT")
+    uploaded_pdf = st.file_uploader("References (PDF)", type="pdf", label_visibility="collapsed")
+    pdf_text = ""
+    if uploaded_pdf:
+        try:
+            reader = PyPDF2.PdfReader(uploaded_pdf)
+            for page in reader.pages:
+                pdf_text += page.extract_text()
+            st.success("Context Loaded")
+        except:
+            st.error("File Error")
+
+    st.markdown("---")
+    
+    # Session Export
+    def create_pdf(messages):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="Kaputa AI - Session Export", ln=True, align='C')
+        pdf.ln(10)
+        for msg in messages:
+            role = "User" if msg['role'] == "user" else "AI"
+            content = msg['content'].encode('latin-1', 'replace').decode('latin-1') 
+            pdf.multi_cell(0, 10, txt=f"{role}: {content}")
+            pdf.ln(5)
+        return pdf.output(dest='S').encode('latin-1')
+
+    if st.button("Download Session", use_container_width=True):
+        if "messages" in st.session_state:
+            st.download_button(
+                label="Confirm Download",
+                data=create_pdf(st.session_state.messages),
+                file_name="session_log.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
+
+    st.markdown("<div style='margin-top: 50px; text-align: center; font-size: 10px; color: #555;'>Kaputa AI Pro v2.0<br>Engineered by Adheesha Sooriyaarachchi</div>", unsafe_allow_html=True)
+
 
 # 5. MAIN CONTENT
-if "messages" not in st.session_state:
-    st.session_state.messages = [{"role": "model", "content": "Kaputa AI is ready."}]
+st.markdown('<div class="main-title">Kaputa AI <span class="badge">PRO</span></div>', unsafe_allow_html=True)
+st.markdown("<div style='text-align: center; color: #888; margin-bottom: 30px;'>Advanced AI Workspace</div>", unsafe_allow_html=True)
 
-# Header (Floating Glass)
-st.markdown("""
-    <div style='
-        position: fixed; 
-        top: 20px; 
-        right: 20px; 
-        background: rgba(28, 28, 30, 0.6); 
-        backdrop-filter: blur(15px); 
-        padding: 8px 16px; 
-        border-radius: 20px; 
-        border: 1px solid rgba(255,255,255,0.1); 
-        z-index: 999; 
-        font-size: 12px; 
-        font-weight: 600; 
-        color: #8E8E93;'>
-        Kaputa OS 1.0
-    </div>
-""", unsafe_allow_html=True)
+# Tabs
+tab1, tab2, tab3, tab4 = st.tabs(["Chat", "Quiz", "Research", "Dev"])
 
-# Chat Loop
-for msg in st.session_state.messages:
-    role = "assistant" if msg["role"] == "model" else "user"
-    avatar = "assets/logo.png" if role == "assistant" else None # User uses default
-    
-    with st.chat_message(role, avatar=avatar):
-        st.markdown(msg["content"])
+# --- TAB 1: CHAT ---
+with tab1:
+    if "messages" not in st.session_state:
+        st.session_state.messages = [{"role": "model", "content": "Kaputa AI Pro (1.5) online. Connectivity optimized. How can I assist?"}]
 
-# Input Area
-if prompt := st.chat_input("Type a message..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    for msg in st.session_state.messages:
+        role = "assistant" if msg["role"] == "model" else "user"
+        avatar = "assets/logo.png" if role == "assistant" else None
+        with st.chat_message(role, avatar=avatar):
+            st.markdown(msg["content"])
 
-    with st.chat_message("assistant", avatar="assets/logo.png"):
-        message_placeholder = st.empty()
-        full_response = ""
-        try:
-            # Add a slight artificial delay for "thinking" feel? No, speed is luxury.
-            response = model.generate_content(prompt, stream=True)
-            for chunk in response:
-                full_response += chunk.text
-                message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "model", "content": full_response})
-        except Exception as e:
-            st.error(f"Error: {e}")
+    if prompt := st.chat_input("Enter command or query..."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant", avatar="assets/logo.png"):
+            with st.spinner("Processing..."):
+                try:
+                    full_response = ""
+                    # Web Search Logic
+                    if enable_search:
+                         try:
+                             results = DDGS().text(prompt, max_results=2)
+                             web_context = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+                             final_prompt = f"Web Context:\n{web_context}\n\nQuery: {prompt}" if results else prompt
+                         except:
+                             final_prompt = prompt
+                    elif pdf_text:
+                        final_prompt = f"PDF Context:\n{pdf_text}\n\nQuery: {prompt}"
+                    else:
+                        final_prompt = prompt
+
+                    response = model.generate_content(final_prompt, stream=True)
+                    placeholder = st.empty()
+                    for chunk in response:
+                        full_response += chunk.text
+                        placeholder.markdown(full_response + "▌")
+                    placeholder.markdown(full_response)
+                    st.session_state.messages.append({"role": "model", "content": full_response})
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# --- TAB 2: QUIZ ---
+with tab2:
+    st.subheader("Quiz Generator")
+    input_text = st.text_area("Paste Content", height=150)
+    if st.button("Generate Quiz", type="primary"):
+        if input_text:
+            with st.spinner("Generating..."):
+                try:
+                    prompt = f"Generate 3 multiple choice questions based on:\n{input_text}"
+                    res = model.generate_content(prompt)
+                    st.markdown(res.text)
+                except Exception as e:
+                    st.error(f"Error: {e}")
+
+# --- TAB 3: VIDEO (Updated) ---
+with tab3:
+    st.subheader("Video Intelligence")
+    video_url = st.text_input("YouTube URL")
+    if st.button("Analyze Video"):
+        if video_url:
+            with st.spinner("Fetching transcript..."):
+                try:
+                    video_id = ""
+                    if "v=" in video_url: video_id = video_url.split("v=")[1].split("&")[0]
+                    elif "youtu.be" in video_url: video_id = video_url.split("/")[-1]
+                    
+                    if video_id:
+                        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                        text = " ".join([x['text'] for x in transcript])
+                        res = model.generate_content(f"Summarize:\n{text[:20000]}")
+                        st.markdown(res.text)
+                    else:
+                        st.error("Invalid URL")
+                except Exception as e:
+                    st.error(f"Transcript Error: {e}")
+
+# --- TAB 4: DEV ---
+with tab4:
+    st.subheader("Developer Tools")
+    code_in = st.text_area("Code Snippet", height=200)
+    dev_action = st.radio("Action", ["Explain Code", "Debug", "Convert to Python"])
+    if st.button("Execute Dev Task"):
+        if code_in:
+            with st.spinner("Analyzing..."):
+                res = model.generate_content(f"{dev_action} for:\n{code_in}")
+                st.markdown(res.text)
