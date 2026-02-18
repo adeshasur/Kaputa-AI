@@ -134,8 +134,14 @@ except Exception as e:
 # 4. SIDEBAR LOGIC
 with st.sidebar:
     # Logo Area
-    # Logo Area (Text Only)
-    st.markdown("<h3 style='margin: 10px 0;'>🦅 Kaputa AI</h3>", unsafe_allow_html=True)
+    # Logo Area (Text Only - Enhanced)
+    st.markdown("""
+        <div style='text-align: center; padding: 10px 0 20px 0;'>
+            <div style='font-size: 3rem; margin-bottom: 5px;'>🦅</div>
+            <h1 style='font-size: 1.8rem; font-weight: 800; margin: 0; background: linear-gradient(90deg, #fff, #aaa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;'>Kaputa AI</h1>
+            <div style='font-size: 0.7rem; font-weight: 600; color: #3A86FF; letter-spacing: 2px; margin-top: 5px;'>PRO EDITION</div>
+        </div>
+    """, unsafe_allow_html=True)
 
     st.markdown("---")
     
