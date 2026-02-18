@@ -134,15 +134,8 @@ except Exception as e:
 # 4. SIDEBAR LOGIC
 with st.sidebar:
     # Logo Area
-    try:
-        logo_img = Image.open("assets/logo.png")
-        col_l1, col_l2 = st.columns([1, 3])
-        with col_l1:
-            st.image(logo_img, width=60)
-        with col_l2:
-            st.markdown("<h3 style='margin: 10px 0;'>Kaputa AI</h3>", unsafe_allow_html=True)
-    except:
-        st.markdown("## 🦅 Kaputa AI")
+    # Logo Area (Text Only)
+    st.markdown("<h3 style='margin: 10px 0;'>🦅 Kaputa AI</h3>", unsafe_allow_html=True)
 
     st.markdown("---")
     
@@ -204,7 +197,7 @@ with tab1:
 
     for msg in st.session_state.messages:
         role = "assistant" if msg["role"] == "model" else "user"
-        avatar = "assets/logo.png" if role == "assistant" else None
+        avatar = "🐦" if role == "assistant" else None
         with st.chat_message(role, avatar=avatar):
             st.markdown(msg["content"])
 
@@ -213,7 +206,7 @@ with tab1:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant", avatar="assets/logo.png"):
+        with st.chat_message("assistant", avatar="🐦"):
             with st.spinner("Processing..."):
                 try:
                     full_response = ""
