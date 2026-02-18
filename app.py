@@ -33,7 +33,7 @@ st.markdown("""
     }
 
     /* GLOBAL */
-    html, body, [class*="css"] {
+    html, body, .stApp {
         font-family: 'Inter', sans-serif;
         color: var(--text) !important;
         background-color: var(--bg-main) !important;
