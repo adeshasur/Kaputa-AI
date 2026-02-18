@@ -51,9 +51,33 @@ except Exception as e:
 
 # 4. SIDEBAR - මෙතන තමයි ඔයාගේ CROW LOGO එක තියෙන්නේ
 with st.sidebar:
-    # මම මෙතනට ලස්සන කක්කෙක්ගේ (Bird) පින්තූරයක් දැම්මා
-    st.image("https://cdn-icons-png.flaticon.com/512/12222/12222560.png", width=120)
-    st.markdown("<h2 style='text-align:center; color:white;'>Kaputa AI Pro</h2>", unsafe_allow_html=True)
+    # Inline SVG Eagle/Crow Logo - no external CDN dependency
+    st.markdown('''
+        <div style="text-align:center; padding: 20px 0 5px 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100" height="100">
+                <defs>
+                    <linearGradient id="birdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#0A84FF;stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:#5E5CE6;stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                <circle cx="32" cy="32" r="30" fill="#1C1C1E" stroke="url(#birdGrad)" stroke-width="2"/>
+                <!-- Eagle/Bird body -->
+                <path d="M18 38 C18 38 22 28 32 24 C36 22 42 22 46 26 C48 28 48 32 46 34 L42 32 L44 28 C44 28 40 24 34 26 C28 28 24 34 22 38 Z" fill="url(#birdGrad)"/>
+                <!-- Wing spread -->
+                <path d="M26 30 C26 30 20 24 14 22 C14 22 20 26 22 30 Z" fill="url(#birdGrad)" opacity="0.8"/>
+                <path d="M38 26 C38 26 44 20 50 18 C50 18 44 22 40 28 Z" fill="url(#birdGrad)" opacity="0.8"/>
+                <!-- Head/beak -->
+                <circle cx="44" cy="26" r="3" fill="url(#birdGrad)"/>
+                <path d="M46 25 L52 23 L47 27 Z" fill="#FF9F0A"/>
+                <!-- Eye -->
+                <circle cx="44.5" cy="25.5" r="1" fill="white"/>
+                <!-- Tail feathers -->
+                <path d="M18 38 L12 42 L16 38 L10 40 L16 37 Z" fill="url(#birdGrad)" opacity="0.7"/>
+            </svg>
+        </div>
+    ''', unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:white; margin-top:5px;'>Kaputa AI Pro</h2>", unsafe_allow_html=True)
     st.markdown("---")
     
     mode = st.radio("SELECT MODE", ["💬 Chat", "📝 Quiz", "🌍 Research"])
