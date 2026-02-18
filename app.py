@@ -120,6 +120,52 @@ st.markdown("""
         font-weight: 500 !important;
     }
     
+    /* ANIMATED CHAT BUBBLES */
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stChatMessage {
+        animation: slideIn 0.3s ease-out forwards;
+        border-radius: 20px;
+        padding: 15px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* User Message (Blue Gradient) */
+    [data-testid="stChatMessage"][data-author="human"] {
+        background: linear-gradient(135deg, rgba(58, 134, 255, 0.2), rgba(58, 134, 255, 0.1));
+        backdrop-filter: blur(10px);
+        border-left: none;
+        margin-left: 20%;
+        border-bottom-right-radius: 5px;
+    }
+    
+    /* AI Message (Glass Grey) */
+    [data-testid="stChatMessage"][data-author="ai"] {
+        background: rgba(30, 30, 30, 0.6);
+        backdrop-filter: blur(10px);
+        margin-right: 20%;
+        border-bottom-left-radius: 5px;
+    }
+    
+    /* Hide Avatars for cleaner bubble look (Optional, but user asked for iMessage style) */
+    [data-testid="chatAvatarIcon"] {
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+    
+    /* SMOOTH PAGE TRANSITIONS */
+    .stApp {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
     header {visibility: hidden;}
     footer {visibility: hidden;}
 </style>
@@ -198,46 +244,101 @@ tab1, tab2, tab3, tab4 = st.tabs(["Chat", "Quiz", "Research", "Dev"])
 
 # --- TAB 1: CHAT ---
 with tab1:
-    if "messages" not in st.session_state:
-        st.session_state.messages = [{"role": "model", "content": "Kaputa AI Pro (1.5) online. Connectivity optimized. How can I assist?"}]
+    # Feature 2: Split View (Side-by-Side)
+    if pdf_text:
+        col_view, col_chat = st.columns([1, 1.2]) # View 45%, Chat 55%
+        with col_view:
+            st.markdown("### 📄 Document Context")
+            st.markdown(f"""
+                <div style='
+                    height: 70vh; 
+                    overflow-y: auto; 
+                    background: rgba(255, 255, 255, 0.05); 
+                    padding: 20px; 
+                    border-radius: 15px; 
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                '>{pdf_text}</div>
+            """, unsafe_allow_html=True)
+        target_container = col_chat
+    else:
+        target_container = st.container()
 
-    for msg in st.session_state.messages:
-        role = "assistant" if msg["role"] == "model" else "user"
-        avatar = "🐦" if role == "assistant" else None
-        with st.chat_message(role, avatar=avatar):
-            st.markdown(msg["content"])
+    with target_container:
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{"role": "model", "content": "Kaputa AI Pro (1.5) online. Connectivity optimized. How can I assist?"}]
 
-    if prompt := st.chat_input("Enter command or query..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        # Chat History
+        chat_box = st.container()
+        with chat_box:
+             for msg in st.session_state.messages:
+                role = "assistant" if msg["role"] == "model" else "user"
+                avatar = "🐦" if role == "assistant" else None
+                with st.chat_message(role, avatar=avatar):
+                    st.markdown(msg["content"])
 
-        with st.chat_message("assistant", avatar="🐦"):
-            with st.spinner("Processing..."):
-                try:
-                    full_response = ""
-                    # Web Search Logic
-                    if enable_search:
-                         try:
-                             results = DDGS().text(prompt, max_results=2)
-                             web_context = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
-                             final_prompt = f"Web Context:\n{web_context}\n\nQuery: {prompt}" if results else prompt
-                         except:
-                             final_prompt = prompt
-                    elif pdf_text:
-                        final_prompt = f"PDF Context:\n{pdf_text}\n\nQuery: {prompt}"
-                    else:
-                        final_prompt = prompt
+        # Feature 3: Quick Action Cards
+        if pdf_text:
+            st.write("") # Spacer
+            q_col1, q_col2, q_col3 = st.columns(3)
+            action_prompt = None
+            
+            if q_col1.button("📝 Summarize", use_container_width=True):
+                action_prompt = "Summarize the document document in detail."
+            if q_col2.button("❓ Generate Quiz", use_container_width=True):
+                action_prompt = "Generate 5 MCQ questions based on this document."
+            if q_col3.button("🐞 Debug/Audit", use_container_width=True):
+                action_prompt = "Analyze the document for logic errors or inconsistencies."
+            
+            if action_prompt:
+                st.session_state.messages.append({"role": "user", "content": action_prompt})
+                with st.chat_message("user"):
+                    st.markdown(action_prompt)
+                
+                # Trigger generation immediately
+                with st.chat_message("assistant", avatar="🐦"):
+                    with st.spinner("Analyzing..."):
+                        response = model.generate_content(f"Context:\n{pdf_text}\n\nTask: {action_prompt}")
+                        st.markdown(response.text)
+                        st.session_state.messages.append({"role": "model", "content": response.text})
+                st.rerun()
 
-                    response = model.generate_content(final_prompt, stream=True)
-                    placeholder = st.empty()
-                    for chunk in response:
-                        full_response += chunk.text
-                        placeholder.markdown(full_response + "▌")
-                    placeholder.markdown(full_response)
-                    st.session_state.messages.append({"role": "model", "content": full_response})
-                except Exception as e:
-                    st.error(f"Error: {e}")
+        # Chat Input
+        if prompt := st.chat_input("Enter command or query..."):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant", avatar="🐦"):
+                with st.spinner("Processing..."):
+                    try:
+                        full_response = ""
+                        # Context Logic
+                        if enable_search:
+                             try:
+                                 results = DDGS().text(prompt, max_results=2)
+                                 web_context = "\n".join([f"- {r['title']}: {r['body']}" for r in results])
+                                 final_prompt = f"Web Context (Search):\n{web_context}\n\nQuery: {prompt}" if results else prompt
+                             except:
+                                 final_prompt = prompt
+                        elif pdf_text:
+                            final_prompt = f"Context (PDF):\n{pdf_text}\n\nQuery: {prompt}"
+                        else:
+                            final_prompt = prompt
+                        
+                        # Feature 4: Syntax Highlighting instruction
+                        final_prompt += "\n\n(IMPORTANT: Use Code Blocks with language tags for all code)"
+
+                        response = model.generate_content(final_prompt, stream=True)
+                        placeholder = st.empty()
+                        for chunk in response:
+                            full_response += chunk.text
+                            placeholder.markdown(full_response + "▌")
+                        placeholder.markdown(full_response)
+                        st.session_state.messages.append({"role": "model", "content": full_response})
+                    except Exception as e:
+                        st.error(f"Error: {e}")
 
 # --- TAB 2: QUIZ ---
 with tab2:
